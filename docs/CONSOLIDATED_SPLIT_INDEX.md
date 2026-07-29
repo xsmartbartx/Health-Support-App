@@ -1,7 +1,5 @@
 ﻿# Consolidated Documentation Index
-
-
-- [01-health-support-app-kompletny-przewodnik-](./01-health-support-app-kompletny-przewodnik-.md)
+- [01-health-support-app-kompletny-przewodnik](./01-health-support-app-kompletny-przewodnik.md)
 - [02-quickstart-5-minut](./02-quickstart-5-minut.md)
 - [03-cel-i-motywacja](./03-cel-i-motywacja.md)
 - [05-infrastruktura-terraform](./05-infrastruktura-terraform.md)
