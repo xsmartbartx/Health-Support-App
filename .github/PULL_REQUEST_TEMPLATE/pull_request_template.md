@@ -1,16 +1,13 @@
----
-name: Pull Request
-about: Szablon PR
+﻿---
+name: Pull request
+about: Describe your changes and why they are needed
 ---
 
-## Opis zmian
+## Description
 
-Co zostało zmienione i dlaczego:
+What does this PR change?
 
 ## Checklist
-- [ ] Tests passed locally
-- [ ] Lint / format OK
-- [ ] Zaktualizowano dokumentację (jeśli potrzebne)
+- [ ] I have added tests if applicable
+- [ ] I have added documentation if applicable
 
-## Jak przetestować
-Instrukcje do odtworzenia zmian.

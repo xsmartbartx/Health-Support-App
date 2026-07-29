@@ -1,20 +1,19 @@
----
+﻿---
 name: Bug report
-about: Zgłoś błąd lub problem
+about: Create a report to help us improve
 ---
 
-**Opisz błąd**
-Kroki aby odtworzyć:
-1. 
-2. 
-3. 
+**Describe the bug**
+A clear and concise description of what the bug is.
 
-Oczekiwane zachowanie:
+**To Reproduce**
+Steps to reproduce the behavior:
+1. Go to '...'
+2. Click on '....'
+3. See error
 
-Aktualne zachowanie:
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
-Środowisko:
-- Wersja:
-- System:
-
-Załącz logi / stack trace jeśli dostępne.
+**Additional context**
+Add any other context about the problem here.
