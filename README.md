@@ -6,15 +6,15 @@ Spis treści
 
 - Quickstart (krótkie wprowadzenie, niżej)
 - Dokumentacja
-  - Architecture — docs/architecture/README.md
-  - Infrastructure / Terraform — docs/infra/aws-terraform.md, docs/infra/terraform.md
-  - CI/CD — docs/ci-cd/workflows.md, docs/ci-cd/full-ci-cd.md
-  - Database & Migrations — docs/db/migrations.md
-  - Observability — docs/observability/README.md
-  - Security & IR — docs/security/siem-soar.md, docs/security/ir-playbooks.md
-  - Operations / Backup — docs/operations/ops-compliance-backup.md
-  - Attachments & Diagrams — docs/attachments.md
-  - Alternatives (płatne → OSS) — docs/alternatives.md
+  - [Architecture](docs/architecture/README.md#architecture-README) — [Overview](docs/architecture/overview.md#architecture-overview)
+  - [Infrastructure / Terraform](docs/infra/aws-terraform.md#infra-aws-terraform) — [General](docs/infra/terraform.md#infra-terraform)
+  - [CI/CD](docs/ci-cd/workflows.md#ci-cd-workflows) — [Examples](docs/ci-cd/full-ci-cd.md#ci-cd-full-ci-cd)
+  - [Database & Migrations](docs/db/migrations.md#db-migrations)
+  - [Observability](docs/observability/README.md#observability-README)
+  - [Security & IR](docs/security/siem-soar.md#security-siem-soar) — [Playbooks](docs/security/ir-playbooks.md#security-ir-playbooks)
+  - [Operations / Backup](docs/operations/ops-compliance-backup.md#operations-ops-compliance-backup)
+  - [Attachments & Diagrams](docs/attachments.md#docs-attachments)
+  - [Alternatives (płatne → OSS)](docs/alternatives.md#docs-alternatives)
 
 - Repozytorium i polityki: CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md, LICENSE
 - Szablony GitHub: .github/ISSUE_TEMPLATE/, .github/PULL_REQUEST_TEMPLATE/
