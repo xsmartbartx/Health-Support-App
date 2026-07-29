@@ -1,5 +1,6 @@
 # Pliki do aktualizacji (sugerowane)
 
+
 Pliki do aktualizacji (sugerowane)
 
 - docs/security/ai-integration.md (pełne wytyczne) — już istnieje; sprawdź i uzupełnij
