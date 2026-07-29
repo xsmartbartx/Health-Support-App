@@ -1,4 +1,10 @@
-﻿# Terraform (infra)
-<a id="infra-terraform"></a>
+﻿# Terraform — wzorce i konwencje
 
-Additional Terraform guidance and references live here. See docs/infra/aws-terraform.md for AWS-specific examples.
+- Modules, naming conventions, tagging resources, and policy-as-code integration.
+
+Developer checklist
+
+- Run `terraform fmt` before commits
+- Run `terraform validate` in CI
+- Protect state with S3 + DynamoDB Locking in shared environments
+

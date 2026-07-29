@@ -1,61 +1,32 @@
-﻿# AWS Terraform — pełne wytyczne i przykłady
-<a id="infra-aws-terraform"></a>
+﻿# AWS Terraform — praktyczny przewodnik dla developera
 
-Sekcja zawiera szczegóły konfiguracji Terraform dla środowisk AWS: zasady, struktura repo, backend, kluczowe moduły oraz najlepsze praktyki.
+Sekcja zawiera przykłady i krok po kroku instrukcje jak testować Terraform lokalnie oraz jak zarządzać state.
 
-9.1 Zasady i konwencje
-- Oddzielne konta AWS dla DEV / QA / STAGING / PROD.
-- Wspólne moduły Terraform w `infra/modules`.
-- Stan Terraform: backend S3 + DynamoDB dla blokad.
-- Formatowanie: `terraform fmt` i `terraform validate` w CI.
-- Policy-as-Code: OPA (rego) lub Sentinel w pipeline.
+Local development
 
-9.2 Struktura repo (przykład)
-infra/ ├─ modules/ │ ├─ vpc/ │ ├─ eks/ │ ├─ rds/ │ └─ iam/ ├─ envs/ │ ├─ dev/ │ ├─ staging/ │ └─ prod/ └─ pipelines/
+- Nie inicjalizuj z backendem w dev: `terraform init -backend=false` — pozwala na szybką walidację bez zapisu stanu w S3.
 
-9.3 Terraform backend (S3 + DynamoDB) — przykład
-```hcl
-terraform {
-  backend "s3" {
-    bucket         = "project-terraform-state" # PRZYKŁAD — zastąp własnym
-    key            = "envs/prod/terraform.tfstate"
-    region         = "eu-central-1"
-    dynamodb_table = "terraform-locks"
-    encrypt        = true
-  }
-}
+Formatowanie i walidacja
+
+```bash
+# format check
+terraform fmt -check
+# validate
+terraform validate
 ```
 
-9.4 Przykładowe moduły — VPC i EKS
-```hcl
-module "vpc" {
-  source = "git::ssh://git@example.com/infra/modules.git//vpc"
-  name   = "project-vpc"
-  cidr   = "10.10.0.0/16"
-  public_subnets  = ["10.10.1.0/24","10.10.2.0/24"]
-  private_subnets = ["10.10.10.0/24","10.10.11.0/24"]
-}
+Przykładowy workflow lokalny
 
-module "eks" {
-  source = "git::ssh://git@example.com/infra/modules.git//eks"
-  cluster_name = "project-eks"
-  vpc_id       = module.vpc.vpc_id
-  subnets      = module.vpc.private_subnets
-  node_groups = {
-    app = { desired_capacity = 3, instance_type = "t3.medium" }
-  }
-  oidc_provider = true
-}
-```
+1. cd infra/envs/dev
+2. terraform init -backend=false
+3. terraform plan -out=tfplan
+4. terraform apply tfplan
 
-9.5 Storage i backup
+Modules
 
-S3 z wersjonowaniem i lifecycle (GLACIER/DEEP_ARCHIVE) dla długoterminowych artefaktów.
-RDS snapshots automatyczne + manualne przed kluczowymi zmianami.
-S3 WORM (Write Once Read Many) dla dowodów incydentów.
+- Trzymaj moduły w infra/modules i testuj je osobno. Użyj Terratest (Go) lub test frameworku do weryfikacji modułów.
 
-9.6 KMS i klucze
+Security notes
 
-CMK per environment, key rotation enabled.
-Dostęp zdefiniowany przez polityki IAM (least privilege).
-Uwagi bezpieczeństwa: wszystkie wartości ARNs, nazw bucketów i kont są przykładami — nigdy nie używaj przykładowych identyfikatorów w produkcji bez ich podmiany.
+- Nigdy nie commituj credentials ani keys do repo. Use placeholders and document how to provision real values in org-specific docs.
+

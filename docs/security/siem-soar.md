@@ -1,24 +1,17 @@
 ﻿# Wykrywanie i reagowanie na incydenty (SIEM / SOAR / Playbooki)
-<a id="security-siem-soar"></a>
 
-17.1 SIEM architektura
-- Ingest: Fluentd/Vector → S3 (raw) → SIEM ingestion (Elastic/Splunk).
-- Enrichment: GeoIP, AD/IdP context, asset tagging.
+Security for developers
 
-17.2 Detection engineering
-- Rule lifecycle: author → test in staging → tune → promote.
-- Track FP rate and TTR metrics.
+- Do not commit secrets. Use git-secrets pre-commit hook and run trufflehog before pushing.
+- For local development use SOPS or .env files and ensure .gitignore excludes them.
 
-17.3 SOAR
-- Automatyzuj niskiego ryzyka akcje (isolate host), wymagaj human approval dla high-impact.
-- Loguj wszystkie automated actions with audit trail.
+Secret scanning
 
-17.4 Evidence preservation
-- Use S3 WORM, checksums, signed manifests, chain-of-custody logs.
+```bash
+# run trufflehog if installed
+trufflehog filesystem --no-update --exclude .git .
+```
 
-17.5 Playbook example (Suspicious Privileged Login)
-- Triage: capture alert id, source IP, user
-- Containment: disable account, block IP, snapshot host
-- Eradication: remove persistence, rotate keys
-- Recovery: restore clean, validate
-- Postmortem: timeline, lessons learned
+Playbooks
+
+- See docs/security/ir-playbooks.md for step-by-step incident handling.

@@ -1,21 +1,16 @@
 ﻿# Baza danych i migracje
-<a id="db-migrations"></a>
 
-Sekcja opisuje wzorzec migracji, strategie zero-downtime oraz architekturę bazy danych.
+Local migrations
 
-11.1 Baza danych
-- Primary DB: Amazon RDS PostgreSQL Multi-AZ.
-- Read replicas dla odczytów intensywnych.
+- Use Docker Postgres for local development and apply migrations via Flyway CLI or Gradle/Maven plugin.
 
-11.2 Migracje
-- Narzędzia: Flyway lub Liquibase.
-- Zasady: migracje wstecznie kompatybilne, additive changes first, backfills as background jobs.
-- Wersjonowanie: migracje trzymane w repo kodu serwisu.
+Example (Flyway):
 
-11.3 Zero downtime
-- Use feature flags for behavioral changes.
-- Apply additive schema changes first (ADD COLUMN, new tables), backfill asynchronously, then switch to new column.
+```bash
+flyway -url=jdbc:postgresql://localhost:5432/db -user=user -password=pass migrate
+```
 
-11.4 Backup i recovery
-- Regularne snapshoty RDS, testowane procedury restore.
-- Krytyczne restore drills wykonywane kwartalnie.
+Backups and restore drills
+
+- Keep instructions for creating and restoring snapshots; test restores regularly.
+
