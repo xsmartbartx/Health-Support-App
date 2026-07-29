@@ -1,4 +1,5 @@
 ﻿# Alternatywy: płatne → darmowe / OSS
+<a id="docs-alternatives"></a>
 
 Poniżej szybkie, praktyczne rekomendacje zamienników dla płatnych rozwiązań.
 

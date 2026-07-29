@@ -1,4 +1,5 @@
 ﻿# Operacje, compliance, backup, SLA i szkolenia
+<a id="operations-ops-compliance-backup"></a>
 
 Sekcja zbiera pozostałe elementy operacyjne: zarządzanie kosztami, compliance, backupy, SLA, szkolenia i roadmapę.
 

@@ -1,4 +1,5 @@
 ﻿# AWS Terraform — pełne wytyczne i przykłady
+<a id="infra-aws-terraform"></a>
 
 Sekcja zawiera szczegóły konfiguracji Terraform dla środowisk AWS: zasady, struktura repo, backend, kluczowe moduły oraz najlepsze praktyki.
 

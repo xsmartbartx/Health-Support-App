@@ -1,4 +1,5 @@
 ﻿# Wykrywanie i reagowanie na incydenty (SIEM / SOAR / Playbooki)
+<a id="security-siem-soar"></a>
 
 17.1 SIEM architektura
 - Ingest: Fluentd/Vector → S3 (raw) → SIEM ingestion (Elastic/Splunk).

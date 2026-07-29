@@ -1,4 +1,5 @@
 ﻿# Diagrams and Attachments
+<a id="docs-attachments"></a>
 
 Przechowuj diagramy architektury i artefakty w katalogu `diagrams/` i linkuj je z dokumentacji.
 
