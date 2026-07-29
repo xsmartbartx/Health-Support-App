@@ -1,4 +1,5 @@
 ﻿# Baza danych i migracje
+<a id="db-migrations"></a>
 
 Sekcja opisuje wzorzec migracji, strategie zero-downtime oraz architekturę bazy danych.
 
