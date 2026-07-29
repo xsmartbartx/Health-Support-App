@@ -1,20 +1,21 @@
 ﻿# Observability
 
-Komponenty i rekomendacje:
+Quick local setup (docker-compose)
 
-- Metrics: Prometheus (node-exporter, kube-state-metrics, app metrics). Export application metrics via OpenTelemetry or Prometheus client libraries.
-- Logs: strukturalne JSON logs → Fluentd / Vector → Loki or S3 + SIEM (Elastic/OpenSearch). Centralizuj logi i utrzymuj schematy (ECS/CEF).
-- Tracing: OpenTelemetry → Tempo / Jaeger. Instrumentuj end-to-end (frontend → backend → db).
-- Dashboards: Grafana z SLO dashboards; definiuj alerty i error budgets.
+```yaml
+# example docker-compose snippet (not committed):
+# prometheus, grafana, loki, tempo services for local dev
+```
 
-Zalecenia operacyjne:
-- Instrumentuj aplikacje z OpenTelemetry SDK.
-- Zdefiniuj SLOs i mapuj do alertów: page vs. ticket alerts.
-- Upewnij się, że non-prod ma ograniczone retentiony kosztowe.
-- Zachowaj parsowalność logów (JSON) i źródła kontekstu (trace_id, span_id, request_id).
+Start demo stack:
 
-Integracje i tooling:
-- Export metrics to Prometheus remote_write if centralization needed.
-- Use Tempo/Jaeger for traces and correlate with logs via trace_id.
-- Keep dashboards versioned in repo (Grafana as code, jsonnet/terraform-provider-grafana).
+```bash
+docker-compose -f infra/dev-observability.yml up -d
+```
+
+Access Grafana at http://localhost:3000 and import dashboards from grafana/dashboards.
+
+Tracing
+
+- Instrument app with OpenTelemetry SDK; ensure trace_id is included in logs.
 
