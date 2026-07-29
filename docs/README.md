@@ -29,3 +29,8 @@ Developer checklist
 - Uruchom testy jednostkowe i integracyjne lokalnie przed PR.
 - Przeprowadź skan sekretów (truffleHog/git-secrets) lokalnie.
 
+
+## Copilot chats
+
+- Copilot chats: docs/copilot_chats/NWP3z7ip8LENiqYZ6NeW3.md
+
