@@ -1,5 +1,6 @@
 # Health-Support-App — Kompletny przewodnik (skondensowany)
 
+
 Krótki opis
 
 Projekt: Health-Support-App — aplikacja wspierająca opiekę zdrowotną. Ten dokument to skondensowane, łatwe do czytania i przeszukiwania centrum dokumentacji: quickstart, architektura, infra, CI/CD, migracje DB, obserwowalność, bezpieczeństwo (w tym zasady integracji AI), procedury operacyjne oraz checklisty dla deweloperów i zespołu bezpieczeństwa.

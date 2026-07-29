@@ -1,5 +1,6 @@
 # Obserwowalność
 
+
 Obserwowalność
 
 - Metryki: Prometheus + Grafana (dashboards), zbieranie z aplikacji przez OTLP
