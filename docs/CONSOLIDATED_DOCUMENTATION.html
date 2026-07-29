@@ -1,0 +1,200 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>CONSOLIDATED_DOCUMENTATION</title>
+<style>body{font-family:Arial,Helvetica,sans-serif;line-height:1.6;padding:20px;max-width:1000px;margin:auto;} pre {background:#f6f8fa;padding:12px;overflow:auto} code{background:#f6f8fa;padding:2px 4px;border-radius:4px}</style></head><body>
+<h1 id="health-support-app-kompletny-przewodnik-skondensowany">Health-Support-App — Kompletny przewodnik (skondensowany)</h1>
+<p>Krótki opis</p>
+<p>Projekt: Health-Support-App — aplikacja wspierająca opiekę zdrowotną. Ten dokument to skondensowane, łatwe do czytania i przeszukiwania centrum dokumentacji: quickstart, architektura, infra, CI/CD, migracje DB, obserwowalność, bezpieczeństwo (w tym zasady integracji AI), procedury operacyjne oraz checklisty dla deweloperów i zespołu bezpieczeństwa.</p>
+<p>Spis treści</p>
+<ul>
+<li>Quickstart</li>
+<li>Cel i motywacja</li>
+<li>Architektura — skrót</li>
+<li>Infrastruktura (Terraform, best practices)</li>
+<li>Kubernetes &amp; Helm</li>
+<li>CI/CD (GitHub Actions + lokalne testy)</li>
+<li>Baza danych i migracje</li>
+<li>Obserwowalność (Prometheus/Grafana/Loki/Tempo)</li>
+<li>Bezpieczeństwo (SIEM/SOAR, IR, AI integration guardrails)</li>
+<li>Operacje i runbooki</li>
+<li>Checklisty dla deweloperów i zespołu bezpieczeństwa</li>
+<li>Podsumowanie i następne kroki</li>
+</ul>
+<hr />
+<p>Quickstart (5 minut)</p>
+<ol>
+<li>Klon repo:</li>
+</ol>
+<p>git clone https://github.com/xsmartbartx/Health-Support-App.git
+   cd Health-Support-App
+   git checkout docs/readme-refactor</p>
+<ol>
+<li>Uruchom lokalnie zależności przez docker-compose (przykład):</li>
+</ol>
+<p>docker-compose -f docker/docker-compose.dev.yml up --build</p>
+<ol>
+<li>Build i testy (przykład dla gradle/multi-module):</li>
+</ol>
+<p>./gradlew clean build
+   ./gradlew test</p>
+<ol>
+<li>Migracje DB (lokalny Postgres):</li>
+</ol>
+<p>docker run --name hs-postgres -e POSTGRES_PASSWORD=pass -p 5432:5432 -d postgres:14
+   ./gradlew flywayMigrate</p>
+<ol>
+<li>Otwórz usługę: http://localhost:8080</li>
+</ol>
+<p>(Uwaga: dostosuj porty i komendy do rzeczywistego stacka projektu.)</p>
+<hr />
+<p>Cel i motywacja</p>
+<p>Krótkie, przyjazne dla czytelnika centrum dokumentacji upraszcza onboardingu, przyspiesza debug oraz ułatwia wprowadzanie zmian. Dla długich, szczegółowych materiałów (playbooki, pełna architektura, przykłady Terraform, procedury IR) podlinkowano istniejące pliki w folderze docs/.</p>
+<hr />
+<p>Architektura — skrót</p>
+<p>Topologia:</p>
+<ul>
+<li>Frontend (CDN) -&gt; API Gateway -&gt; Ingress (Kubernetes/EKS) -&gt; Mikroserwisy</li>
+<li>Persistencja: PostgreSQL (primary), Redis (cache)</li>
+<li>Observability: Prometheus, Grafana, Loki, Tempo, OpenTelemetry</li>
+<li>CI/CD: GitHub Actions -&gt; Container Registry -&gt; ArgoCD (promocje)</li>
+<li>Secrets: Vault (or SOPS/encrypted files)</li>
+</ul>
+<p>Główne decyzje projektowe:</p>
+<ul>
+<li>Microservices w kontenerach, manifesty Helm dla K8s</li>
+<li>Infrastruktura zarządzana przez Terraform (moduły, state backend)</li>
+<li>Security-first: immutable logs, RBAC policy engine, audytowalny pipeline</li>
+</ul>
+<hr />
+<p>Infrastruktura (Terraform)</p>
+<p>Najważniejsze praktyki:</p>
+<ul>
+<li>Struktura: modules/ shared modules, envs/<dev|staging|prod>/</li>
+<li>Backend: zewnętrzny state (S3 + DynamoDB lock) dla AWS</li>
+<li>Local dev: terraform init -backend=false; terraform plan -out=tfplan; terraform apply tfplan</li>
+<li>Weryfikacja: terraform fmt, terraform validate, tfsec (SAST infra)</li>
+</ul>
+<p>Przykład inicjalizacji (dev):</p>
+<p>cd infra/envs/dev
+terraform init -backend=false
+terraform fmt -recursive
+terraform validate
+terraform plan -out=tfplan</p>
+<h1 id="review-tfplan-then">review tfplan, then</h1>
+<p>terraform apply tfplan</p>
+<p>Sekrety:
+- Nie trzymać sekretów w plaintext w repo
+- Używać SOPS/age lub Vault</p>
+<hr />
+<p>Kubernetes &amp; Helm</p>
+<ul>
+<li>Lokalny development: kind lub k3d</li>
+<li>Helm charts: umieść charts/ w repo lub korzystaj z zewnętrznych repo</li>
+<li>Lint: helm lint ./charts/<chart></li>
+<li>Example: helm upgrade --install app ./charts/app -f values.dev.yaml</li>
+</ul>
+<hr />
+<p>CI/CD</p>
+<ul>
+<li>GitHub Actions: pipeliney do build/test, SAST, SCA, publish container</li>
+<li>Local debug: instalacja act do lokalnego uruchamiania workflowów</li>
+<li>Promotion: ArgoCD automatycznie synchronizuje obrazy ze środowiskami po tagowaniu lub merge</li>
+</ul>
+<p>Przykładowe kroki pipeline:
+- checkout
+- set up JDK/node/python
+- cache deps
+- build
+- unit tests
+- SAST (semgrep/tfsec/trivy)
+- publish container
+- open PR -&gt; merge -&gt; ArgoCD promuje</p>
+<hr />
+<p>Baza danych i migracje</p>
+<ul>
+<li>Narzędzia: Flyway lub Liquibase</li>
+<li>Praktyka: migracje w repo (sql/ lub scripts/), wersjonowane wraz z kodem</li>
+<li>Lokalne migracje: uruchomić DB w docker i wykonać migracje przed testami</li>
+<li>Backup: regularne snapshoty (pg_dump/point-in-time) i test restore</li>
+</ul>
+<hr />
+<p>Obserwowalność</p>
+<ul>
+<li>Metryki: Prometheus + Grafana (dashboards), zbieranie z aplikacji przez OTLP</li>
+<li>Logging: Loki / centralized logging (lokalne docker-compose dev stack)</li>
+<li>Tracing: OpenTelemetry -&gt; Tempo/Jaeger</li>
+</ul>
+<p>Szybkie uruchomienie lokalne (docker-compose):
+- docker-compose -f infra/observability/docker-compose.yml up</p>
+<hr />
+<p>Bezpieczeństwo</p>
+<p>W skrócie (pełne szczegóły w docs/security/):</p>
+<ul>
+<li>RBAC: zarządzanie przez centralny policy engine (nie przez AI)</li>
+<li>Logs: niezmienialność (WORM, checksums), wszystkie AI rekomendacje logowane</li>
+<li>Risk scoring: rule-based engine, AI tylko sugeruje i opisuje</li>
+<li>Correlation: reguły, heurystyki i sygnatury; AI nie decyduje korelacji</li>
+<li>Evidence: chain of custody, checksums, niezmienność</li>
+<li>Secrets: Vault / SOPS</li>
+<li>SCA/SAST: Trivy, Semgrep, Grype w CI</li>
+</ul>
+<p>AI Integration Guardrails (skondensowane — na podstawie Copilot chat)</p>
+<ul>
+<li>AI role: opis, interpretacja, rekomendacje, sugerowane remediacje</li>
+<li>AI nie może: modyfikować RBAC, usuwać/zmieniać logów, nadpisywać scoringu ryzyka, decydować korelacji incydentów, auto-remediować krytycznych działań bez ludzkiego zatwierdzenia</li>
+<li>Audyt: każda rekomendacja AI logowana z metadanymi (co, kiedy, dlaczego, dowody)</li>
+<li>Human-in-the-loop: zatwierdzenie wymagane dla wysokiego i krytycznego ryzyka</li>
+</ul>
+<p>Szybka lista kontroli AI-security:
+- RBAC: policy engine
+- Logging: WORM/immutable storage
+- Risk: rule-based scoring
+- Correlation: deterministic rules
+- Evidence: preserved and checksumed</p>
+<hr />
+<p>Operacje i runbooki</p>
+<p>Podstawowe runbooki (skrót):</p>
+<ul>
+<li>Restore DB: kroki do restore z backupu, weryfikacja integracji</li>
+<li>Key rotation: kroki i harmonogram rotacji kluczy</li>
+<li>Incident response: triage → contain → eradicate → recover → postmortem</li>
+</ul>
+<p>Zobacz docs/operations/ops-compliance-backup.md dla pełnych instrukcji</p>
+<hr />
+<p>Checklisty dla deweloperów</p>
+<p>Przed PR:
+- [ ] Uruchom testy lokalnie
+- [ ] Uruchom lintery i SAST
+- [ ] Upewnij się, że nie ma sekretów w zmianach
+- [ ] Wypełnij PR template</p>
+<p>Dla release:
+- [ ] Zaktualizuj changelog
+- [ ] Zaktualizuj tag i release notes
+- [ ] Przeprowadź smoke tests na staging</p>
+<hr />
+<p>Zawartość przeniesiona z Copilot chat (najważniejsze punkty)</p>
+<ul>
+<li>Metoda Study Mode: krok po kroku uczyć reguły bezpieczeństwa (kluczowa zasada, dlaczego, co AI może, co AI nie może, mini-pytanie, pauza)</li>
+<li>Kluczowe zasady: AI tylko opisuje, nie modyfikuje; logi i RBAC muszą być deterministyczne i niezmienialne</li>
+<li>Działania do wykonania: dodanie AI integration guidelines, testów bezpieczeństwa, audit trail dla rekomendacji AI</li>
+</ul>
+<hr />
+<p>Pliki do aktualizacji (sugerowane)</p>
+<ul>
+<li>docs/security/ai-integration.md (pełne wytyczne) — już istnieje; sprawdź i uzupełnij</li>
+<li>docs/README.md — skrócone odnośniki i TOC (aktualne)</li>
+<li>docs/copilot_chats/NWP3z7ip8LENiqYZ6NeW3.md — pełen transcript i notatki (częściowo wstawione)</li>
+</ul>
+<hr />
+<p>Następne kroki / Action items</p>
+<ol>
+<li>Przejrzeć ten skondensowany dokument i wskazać brakujące fragmenty specyficzne dla repo (np. dokładne komendy build, porty, nazwy usług)</li>
+<li>Uzupełnić przykłady Terraform/Helm z rzeczywistymi modułami repo</li>
+<li>Dodać dokładne dashboardy Grafana i przykłady queries Prometheus</li>
+<li>Dodać pełny transcript Copilot chat (jeśli chcesz, wstawię cały tekst)</li>
+</ol>
+<hr />
+<p>Kontakt i autorska nota</p>
+<p>Maintainer: maintainer-email@example.com — aktualizuj według potrzeb.</p>
+<hr />
+<p>Plik skompilowany automatycznie na podstawie istniejących dokumentów w docs/ oraz notatek z copilot chat. Jeśli chcesz, rozbiję go ponownie na mniejsze pliki lub wygeneruję PDF/HTML dla wygodnego przeglądania.</p>
+</body></html>
