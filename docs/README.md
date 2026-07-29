@@ -39,3 +39,9 @@ Developer checklist
 
 See docs/security/ai-integration.md for principles and guardrails for safe AI integration in security operations.
 
+
+## Consolidated documentation split
+
+The consolidated documentation has been split into per-section files for easier navigation:
+
+- [Consolidated Documentation Index](./CONSOLIDATED_SPLIT_INDEX.md)
