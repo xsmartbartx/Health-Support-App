@@ -1,0 +1,49 @@
+﻿name: Docs CI
+on:
+  push:
+    branches: [ "docs/readme-refactor", "main" ]
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/**'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Check Terraform format
+        run: |
+          set -e
+          if [ -d "infra" ]; then
+            find infra -type f -name "*.tf" -print0 | xargs -0 -n1 dirname | sort -u | xargs -I {} sh -c "cd {} && terraform fmt -check || exit 1"
+          else
+            echo "No infra folder to check"
+          fi
+
+      - name: Helm lint (if charts present)
+        uses: azure/setup-helm@v1
+        if: "contains(github.event.head_commit.message, 'chart') || always()"
+        run: |
+          if [ -d "charts" ]; then
+            helm lint charts/* || true
+          else
+            echo "No charts directory"
+          fi
+
+      - name: Secret scanning (truffleHog)
+        uses: trufflesecurity/trufflehog-action@v2
+        with:
+          path: .
+          redact: true
+
+      - name: Markdown lint
+        run: |
+          # optional: run a markdown linter if installed
+          echo "Markdown lint step - configure your linter"
