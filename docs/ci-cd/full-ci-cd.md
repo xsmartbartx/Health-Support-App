@@ -1,4 +1,5 @@
 ﻿# CI/CD — GitHub Actions, ArgoCD, Helm — pełne przykłady
+<a id="ci-cd-full-ci-cd"></a>
 
 Sekcja opisuje szczegółowo workflowy CI i CD, gate'y bezpieczeństwa oraz promocję przez GitOps.
 
