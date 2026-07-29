@@ -2,43 +2,35 @@
 
 Ten katalog zawiera szczegółową dokumentację architektury, infrastruktury i procedur operacyjnych projektu.
 
-Pełna architektura i materiały:
+Dla programisty - szybkie helpy:
 
-- Architecture
-  - High-level architecture: Frontend (CDN) → API Gateway → EKS (Ingress) → mikroserwisy
-  - Persistencja: PostgreSQL (RDS Multi-AZ), Redis (cache)
-  - Observability: Prometheus, Grafana, Loki, Tempo, OpenTelemetry
-  - CI/CD: GitHub Actions (build, SAST, SCA) → image registry → ArgoCD (gitops promotion)
+- Lokalny dev: opcje uruchomienia usług zależnych (docker-compose), przykładowe polecenia build/test i zmienne środowiskowe.
+- Infra: jak przygotować i przetestować Terraform lokalnie (terraform init -backend=false; fmt; validate), gdzie są moduły, i jak konfigurować backend S3/Dynamo.
+- CI/CD: jak działa pipeline (build → SAST → SCA → push → ArgoCD), oraz jak uruchamiać workflowy lokalnie dla testów.
+- DB: instrukcje migracji (Flyway/Liquibase) i jak robić restore drills lokalnie.
+- Observability: jak uruchomić Prometheus/Grafana/Tempo lokalnie do developmentu.
 
-- Infra / Terraform
-  - Struktura repo: infra/modules (vpc, eks, rds, iam), infra/envs/{dev,staging,prod}
-  - Backend: S3 + DynamoDB (locking), przykład konfiguracji w infra/aws-terraform.md
-  - Przykładowe moduły VPC i EKS (seeded sources)
+Szybkie linki
 
-- CI/CD
-  - Opis workflow: build → unit tests → SAST → SCA → image push → deploy staging → e2e → promote → deploy prod
-  - Use OIDC for short-lived AWS creds in Actions; Gate: manual promotion to prod
+- Architecture — architecture/README.md
+- Infra / Terraform — infra/aws-terraform.md, infra/terraform.md
+- CI/CD — ci-cd/workflows.md, ci-cd/full-ci-cd.md
+- Database & Migrations — db/migrations.md
+- Observability — observability/README.md
+- Security & IR — security/siem-soar.md, security/ir-playbooks.md
+- Operations / Backup — operations/ops-compliance-backup.md
+- Attachments & Diagrams — attachments.md
+- Alternatives (płatne → OSS) — alternatives.md
 
-- Database & Migrations
-  - Narzędzia: Flyway lub Liquibase
-  - Zasady: additive changes first, backfills as background jobs, test restore drills
+Developer checklist
 
-- Observability
-  - Collect metrics, logs, traces; SLO dashboards; instrument with OpenTelemetry SDK
+- Skonfiguruj lokalne środowisko: Docker, Java/Gradle, Node (jeśli potrzebne), narzędzia terraform.
+- Uruchom lokalne zależności (docker-compose) przed uruchomieniem serwisów.
+- Uruchom testy jednostkowe i integracyjne lokalnie przed PR.
+- Przeprowadź skan sekretów (truffleHog/git-secrets) lokalnie.
 
-- Security & IR
-  - SIEM ingestion, detection engineering, SOAR playbooks, evidence preservation (S3 WORM)
 
-- Operations
-  - Backup strategy, RPO/RTO classification, cost ownership, runbooks, training
+## Copilot chats
 
-Pliki w tym katalogu:
-- architecture/README.md — szczegółowa architektura i overview
-- infra/aws-terraform.md — konfiguracje Terraform dla AWS (backend, moduły)
-- ci-cd/full-ci-cd.md — przykładowe workflowy CI/CD
-- db/migrations.md — migracje, zero-downtime
-- observability/README.md — monitoring, logging, tracing
-- security/siem-soar.md, security/ir-playbooks.md — wykrywanie i playbooki
-- operations/ops-compliance-backup.md — operacje i backup
-- alternatives.md — płatne → OSS rekomendacje
+- Copilot chats: docs/copilot_chats/NWP3z7ip8LENiqYZ6NeW3.md
 
