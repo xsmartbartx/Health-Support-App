@@ -34,3 +34,8 @@ Developer checklist
 
 - Copilot chats: docs/copilot_chats/NWP3z7ip8LENiqYZ6NeW3.md
 
+
+## AI Security Integration
+
+See docs/security/ai-integration.md for principles and guardrails for safe AI integration in security operations.
+

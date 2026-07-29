@@ -15,3 +15,8 @@ trufflehog filesystem --no-update --exclude .git .
 Playbooks
 
 - See docs/security/ir-playbooks.md for step-by-step incident handling.
+
+## AI Integration Guardrails
+
+See docs/security/ai-integration.md for comprehensive guidance on safe AI integration in security operations.
+
