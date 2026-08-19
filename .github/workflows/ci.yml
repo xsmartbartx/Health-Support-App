@@ -1,0 +1,23 @@
+name: CI
+on:
+  push:
+    branches: [ 'scaffold/springboot-service' ]
+  pull_request:
+    branches: [ 'scaffold/springboot-service' ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Build and test with Gradle (docker)
+      run: |
+        docker run --rm -v "${{ github.workspace }}":/home/gradle/project -w /home/gradle/project gradle:8.4.1-jdk17 gradle clean build --no-daemon
