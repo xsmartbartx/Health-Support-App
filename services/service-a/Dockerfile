@@ -5,8 +5,8 @@ COPY --chown=gradle:gradle . .
 RUN gradle bootJar --no-daemon --build-cache
 
 # Runtime stage
-FROM eclipse-temurin:17-jre-alpine
-RUN apk add --no-cache dumb-init
+FROM eclipse-temurin:17-jre
+RUN apt-get update && apt-get install -y --no-install-recommends dumb-init && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Create non-root user
