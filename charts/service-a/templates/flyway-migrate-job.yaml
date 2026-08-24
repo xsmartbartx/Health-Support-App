@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "service-a.fullname" . }}-flyway-migrate
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: {{ include "service-a.name" . }}-flyway
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: flyway
+          image: "{{ .Values.flyway.image }}"
+          args:
+            - "-url=jdbc:postgresql://{{ include "service-a.fullname" . }}-postgres:5432/{{ .Values.postgres.database }}"
+            - "-user=$(DB_USERNAME)"
+            - "-password=$(DB_PASSWORD)"
+            - "-connectRetries=10"
+            - "migrate"
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "service-a.fullname" . }}-db
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "service-a.fullname" . }}-db
+                  key: DB_PASSWORD
+          volumeMounts:
+            - name: migrations
+              mountPath: /flyway/sql
+      volumes:
+        - name: migrations
+          configMap:
+            name: {{ include "service-a.fullname" . }}-migrations
