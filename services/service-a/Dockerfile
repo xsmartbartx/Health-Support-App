@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends dumb-init && rm
 WORKDIR /app
 
 # Create non-root user
-RUN groupadd -g 1000 appuser && useradd -u 1000 -g appuser -s /sbin/nologin -c "Docker app user" appuser
+RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser -s /sbin/nologin -c "Docker app user" appuser
 
 COPY --from=builder --chown=appuser:appuser /home/gradle/project/build/libs/*.jar /app/app.jar || true
 
