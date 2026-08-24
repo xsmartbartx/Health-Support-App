@@ -8,6 +8,7 @@ on:
 
 jobs:
   docker:
+    name: Build, push and smoke-test image
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -46,7 +47,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Compose smoke test
+        run: |
+          docker compose up --pull always -d
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/actuator/health; then
+              echo "Service healthy"
+              break
+            fi
+            echo "Waiting for service-a..."
+            sleep 5
+          done
+          docker compose logs
+          docker compose down -v
+
   helm-validate:
+    name: Lint and render Helm chart
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
