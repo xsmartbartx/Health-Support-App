@@ -9,6 +9,11 @@ service:
   type: ClusterIP
   port: 8080
 
+database:
+  url: "jdbc:postgresql://postgres:5432/healthdb"
+  username: "postgres"
+  password: "postgres"
+
 resources: {}
 
 nodeSelector: {}
