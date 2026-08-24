@@ -1,8 +1,8 @@
 # Build stage
-FROM gradle:latest AS builder
+FROM gradle:8-jdk17 AS builder
 WORKDIR /home/gradle/project
 COPY --chown=gradle:gradle . .
-RUN gradle bootJar --no-daemon --build-cache 2>&1 || echo "Build skipped"
+RUN gradle bootJar --no-daemon --build-cache
 
 # Runtime stage
 FROM eclipse-temurin:17-jre
@@ -12,7 +12,7 @@ WORKDIR /app
 # Create non-root user
 RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser -s /sbin/nologin -c "Docker app user" appuser
 
-COPY --from=builder --chown=appuser:appuser /home/gradle/project/build/libs/*.jar /app/app.jar || true
+COPY --from=builder --chown=appuser:appuser /home/gradle/project/build/libs/*.jar /app/app.jar
 
 EXPOSE 8080
 USER appuser
