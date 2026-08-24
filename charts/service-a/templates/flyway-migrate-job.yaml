@@ -18,7 +18,7 @@ spec:
         - name: flyway
           image: "{{ .Values.flyway.image }}"
           args:
-            - "-url=jdbc:postgresql://{{ include "service-a.fullname" . }}-postgres:5432/{{ .Values.postgres.database }}"
+            - {{ printf "-url=jdbc:postgresql://%s-postgres:5432/%s" (include "service-a.fullname" .) .Values.postgres.database | quote }}
             - "-user=$(DB_USERNAME)"
             - "-password=$(DB_PASSWORD)"
             - "-connectRetries=10"
