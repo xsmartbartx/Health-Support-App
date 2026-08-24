@@ -10,7 +10,8 @@ service:
   port: 8080
 
 database:
-  url: "jdbc:postgresql://postgres:5432/healthdb"
+  # Note: URL is now templated directly in deployment.yaml against the postgres StatefulSet service.
+  # These fields remain for reference / potential external-DB overrides.
   username: "postgres"
   password: "postgres"
 
@@ -25,6 +26,9 @@ postgres:
     limits:
       cpu: 250m
       memory: 256Mi
+
+flyway:
+  image: "flyway/flyway:10-alpine"
 
 resources:
   requests:
