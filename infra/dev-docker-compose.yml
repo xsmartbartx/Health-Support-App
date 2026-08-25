@@ -15,6 +15,7 @@ services:
   service-a:
     build:
       context: ../services/service-a
+    command: sh -c "until nc -z postgres 5432; do echo waiting for postgres; sleep 1; done; java -jar /app/app.jar"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/healthdb
       - SPRING_DATASOURCE_USERNAME=postgres
