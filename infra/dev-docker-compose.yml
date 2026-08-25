@@ -14,7 +14,7 @@ services:
 
   service-a:
     build:
-      context: ./services/service-a
+      context: ../services/service-a
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/healthdb
       - SPRING_DATASOURCE_USERNAME=postgres
