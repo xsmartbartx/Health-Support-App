@@ -67,6 +67,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify JDK version pin matches Dockerfile
+        run: |
+          EXPECTED_MAJOR=$(grep '^java' .tool-versions | awk '{print $2}' | cut -d. -f1)
+          DOCKERFILE_MAJOR=$(grep -oE 'eclipse-temurin:[0-9]+' services/service-a/Dockerfile | head -1 | grep -oE '[0-9]+')
+          echo "Expected (.tool-versions): $EXPECTED_MAJOR"
+          echo "Dockerfile (eclipse-temurin): $DOCKERFILE_MAJOR"
+          if [ "$EXPECTED_MAJOR" != "$DOCKERFILE_MAJOR" ]; then
+            echo "::error::.tool-versions JDK ($EXPECTED_MAJOR) does not match Dockerfile base image ($DOCKERFILE_MAJOR)"
+            exit 1
+          fi
+
       - name: Set up Helm
         uses: azure/setup-helm@v4
 
