@@ -25,8 +25,38 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.testcontainers:junit-jupiter:1.18.4'
+    testImplementation 'org.testcontainers:postgresql:1.18.4'
 }
 
 test {
     useJUnitPlatform()
 }
+
+// Integration test source set & task
+sourceSets {
+    integrationTest {
+        java {
+            srcDir 'src/integrationTest/java'
+        }
+        resources {
+            srcDir 'src/integrationTest/resources'
+        }
+        compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+task integrationTest(type: Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    useJUnitPlatform()
+    shouldRunAfter test
+}
+
+check.dependsOn integrationTest
