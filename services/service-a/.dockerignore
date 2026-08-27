@@ -16,6 +16,7 @@ build/
 .project
 .settings/
 bin/
+!bin/wait-for-it.sh
 out/
 *.jar
 *.war
