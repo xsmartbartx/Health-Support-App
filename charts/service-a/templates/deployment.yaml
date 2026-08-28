@@ -3,51 +3,38 @@ kind: Deployment
 metadata:
   name: {{ include "service-a.fullname" . }}
   labels:
-    app: {{ include "service-a.name" . }}
+    app.kubernetes.io/name: {{ include "service-a.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "service-a.name" . }}
+      app.kubernetes.io/name: {{ include "service-a.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ include "service-a.name" . }}
+        app.kubernetes.io/name: {{ include "service-a.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       containers:
         - name: service-a
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: 8080
-          env:
-            - name: SPRING_DATASOURCE_URL
-              value: {{ printf "jdbc:postgresql://%s-postgres:5432/%s" (include "service-a.fullname" .) .Values.postgres.database | quote }}
-            - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "service-a.fullname" . }}-db
-                  key: DB_USERNAME
-            - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "service-a.fullname" . }}-db
-                  key: DB_PASSWORD
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 15
+            - containerPort: {{ .Values.service.port }}
           readinessProbe:
             httpGet:
-              path: /actuator/health/readiness
-              port: 8080
-            initialDelaySeconds: 15
+              path: /health
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 10
             periodSeconds: 10
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-      nodeSelector:
-        {{- toYaml .Values.nodeSelector | nindent 8 }}
-      tolerations:
-        {{- toYaml .Values.tolerations | nindent 8 }}
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
+          resources: {{ toYaml .Values.resources | nindent 12 }}
