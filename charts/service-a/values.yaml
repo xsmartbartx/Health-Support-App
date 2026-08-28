@@ -1,43 +1,15 @@
 replicaCount: 1
 
 image:
-  repository: health-support-app/service-a
+  repository: ghcr.io/<your-org>/service-a
+  tag: latest
   pullPolicy: IfNotPresent
-  tag: "local"
 
 service:
   type: ClusterIP
   port: 8080
 
-database:
-  # Note: URL is now templated directly in deployment.yaml against the postgres StatefulSet service.
-  # These fields remain for reference / potential external-DB overrides.
-  username: "postgres"
-  password: "postgres"
-
-postgres:
-  image: "postgres:15-alpine"
-  database: "healthdb"
-  storage: 1Gi
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 250m
-      memory: 256Mi
-
-flyway:
-  image: "flyway/flyway:10-alpine"
-
-resources:
-  requests:
-    cpu: 250m
-    memory: 256Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
-
+resources: {}
 nodeSelector: {}
-
 tolerations: []
+affinity: {}
