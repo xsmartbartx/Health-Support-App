@@ -22,15 +22,12 @@ jobs:
     name: Run unit tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -40,7 +37,6 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*','**/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             gradle-${{ runner.os }}-
-
       - name: Run unit tests (service-a)
         working-directory: ${{ env.SERVICE_PATH }}
         run: ./gradlew clean test --no-daemon --stacktrace
@@ -64,15 +60,12 @@ jobs:
           --health-timeout=5s
           --health-retries=10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -82,16 +75,12 @@ jobs:
           key: gradle-${{ runner.os }}-integration-${{ hashFiles('**/*.gradle*','**/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             gradle-${{ runner.os }}-integration-
-
       - name: Wait for Postgres to be ready
         run: |
-          echo "Waiting for postgres on localhost:5432..."
           for i in $(seq 1 30); do
             pg_isready -h 127.0.0.1 -p 5432 -U postgres && break
-            echo "Waiting for postgres... ($i/30)"
-            sleep 2
+            echo "Waiting for postgres... ($i/30)"; sleep 2
           done
-
       - name: Run integration tests (service-a)
         working-directory: ${{ env.SERVICE_PATH }}
         env:
@@ -100,7 +89,6 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: postgres
         run: |
           set -e
-          # Try a dedicated integrationTest task first, then tests named *IT
           if ./gradlew -q integrationTest --no-daemon -PskipUnitTests=true; then
             echo "integrationTest task ran"
           else
@@ -108,36 +96,37 @@ jobs:
             if ./gradlew -q test --tests '*IT' --no-daemon; then
               echo "Integration tests (*IT) ran"
             else
-              echo "No integration tests found or they failed; exiting with non-zero to mark job as failed if tests actually failed."
-              # If no integration tests exist, exit 0 to avoid failing the workflow unnecessarily.
-              # Comment the next line if you want the job to fail when there are no integration tests.
+              echo "No integration tests found or they failed; exiting 0 to avoid blocking CI"
               exit 0
             fi
           fi
 
   docker:
-    name: Build & push Docker image
+    name: Build & push Docker image (with cache)
     needs: [test, integration]
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up QEMU (for multi-platform builds)
+      - name: Set build date
+        id: build_meta
+        run: echo "date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
       - name: Set up docker buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Login to GitHub Container Registry
+      - name: Login to GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push image (service-a)
+      - name: Build and push image with build cache
         uses: docker/build-push-action@v5
         with:
           context: ${{ env.SERVICE_PATH }}
@@ -149,7 +138,12 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
           build-args: |
             JAR_FILE=/home/gradle/project/build/libs/*.jar
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:cache
+          cache-to: type=registry,mode=max,ref=${{ env.IMAGE_NAME }}:cache
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.created=${{ steps.build_meta.outputs.date }}
 
       - name: Output image info
-        run: |
-          echo "Image pushed: ${{ env.IMAGE_NAME }}:latest"
+        run: echo "Image pushed: ${{ env.IMAGE_NAME }}:latest"
