@@ -5,13 +5,13 @@ COPY --chown=gradle:gradle . .
 RUN gradle bootJar --no-daemon --build-cache
 
 # RUNTIME stage
-# Using pinned digest for eclipse-temurin:17-jre-alpine
-FROM eclipse-temurin:17-jre-alpine@sha256:9c4e67e1045f1c46ef59cc21c41a7e20a8c5b2b6c1f1f3c5c5c1c5c5c5c5c5c
-RUN apk add --no-cache dumb-init netcat-openbsd
+# Using eclipse-temurin JRE for security updates and support
+FROM eclipse-temurin:17-jre
+RUN apt-get update && apt-get install -y --no-install-recommends dumb-init netcat-openbsd && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Create non-root user
-RUN addgroup -g 1001 appuser && adduser -u 1001 -G appuser -s /sbin/nologin -D appuser
+RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser -s /sbin/nologin -c "Docker app user" appuser
 
 COPY --from=builder --chown=appuser:appuser /home/gradle/project/build/libs/*.jar /app/app.jar
 COPY --from=builder --chown=appuser:appuser /home/gradle/project/bin/wait-for-it.sh /wait-for-it.sh
