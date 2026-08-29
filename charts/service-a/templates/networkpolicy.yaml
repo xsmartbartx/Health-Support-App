@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "service-a.fullname" . }}-postgres-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ include "service-a.name" . }}-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "service-a.name" . }}
+              app.kubernetes.io/instance: {{ .Release.Name }}
+        - podSelector:
+            matchLabels:
+              app: {{ include "service-a.name" . }}-flyway
+      ports:
+        - protocol: TCP
+          port: 5432

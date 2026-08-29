@@ -1,0 +1,12 @@
+*** Begin Patch
+*** Update File: services/service-a/Dockerfile
+@@
+-# Build stage
+-FROM gradle:8.4.1-jdk17 AS builder
++# Build stage - use a stable gradle image with JDK 17
++FROM gradle:jdk17 AS builder
+ WORKDIR /home/gradle/project
+ COPY --chown=gradle:gradle . .
+ # Build the jar (uses Gradle wrapper if present in project; gradle image provides gradle too)
+ RUN gradle bootJar --no-daemon
+*** End Patch

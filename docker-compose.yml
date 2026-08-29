@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: health-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-healthdb}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - health-network
+    restart: unless-stopped
+
+  service-a:
+    build:
+      context: ./services/service-a
+      dockerfile: Dockerfile
+    container_name: health-service-a
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST:-postgres}:${DB_PORT:-5432}/${DB_NAME:-healthdb}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      SERVER_PORT: 8080
+      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx512m}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/service-a/src:/app/src:cached
+    networks:
+      - health-network
+    restart: unless-stopped
+    # Uncomment for hot-reload (requires Spring DevTools)
+    # develop:
+    #   watch:
+    #     - path: ./services/service-a/src
+    #       action: rebuild
+
+volumes:
+  postgres-data:
+    driver: local
+
+networks:
+  health-network:
+    driver: bridge

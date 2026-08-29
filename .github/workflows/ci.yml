@@ -1,0 +1,44 @@
+name: CI
+on:
+  push:
+    branches: [ 'scaffold/springboot-service' ]
+  pull_request:
+    branches: [ 'scaffold/springboot-service' ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Read expected JDK version from .tool-versions
+      id: jdk-version
+      run: |
+        JAVA_LINE=$(grep '^java' .tool-versions)
+        JAVA_VERSION=$(echo "$JAVA_LINE" | awk '{print $2}')
+        JAVA_MAJOR=$(echo "$JAVA_VERSION" | cut -d. -f1)
+        echo "full=$JAVA_VERSION" >> "$GITHUB_OUTPUT"
+        echo "major=$JAVA_MAJOR" >> "$GITHUB_OUTPUT"
+        echo "Expected JDK version: $JAVA_VERSION (major: $JAVA_MAJOR)"
+
+    - name: Set up JDK ${{ steps.jdk-version.outputs.major }}
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '${{ steps.jdk-version.outputs.major }}'
+
+    - name: Verify java -version matches .tool-versions
+      run: |
+        ACTUAL_MAJOR=$(java -version 2>&1 | head -1 | grep -oE '"[0-9]+' | tr -d '"')
+        EXPECTED_MAJOR="${{ steps.jdk-version.outputs.major }}"
+        echo "Installed JDK major version: $ACTUAL_MAJOR"
+        echo "Expected JDK major version (.tool-versions): $EXPECTED_MAJOR"
+        if [ "$ACTUAL_MAJOR" != "$EXPECTED_MAJOR" ]; then
+          echo "::error::java -version ($ACTUAL_MAJOR) does not match .tool-versions ($EXPECTED_MAJOR)"
+          exit 1
+        fi
+
+    - name: Build and test with Gradle
+      working-directory: services/service-a
+      run: ./gradlew clean test --no-daemon --stacktrace

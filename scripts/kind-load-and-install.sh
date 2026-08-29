@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+RELEASE=${1:-service-a-dev}
+CHART=charts/service-a
+IMAGE=${2:-service-a:local}
+
+# Build image locally
+docker build -t "$IMAGE" services/service-a
+
+# Create a kind cluster if not exists
+if ! kind get clusters | grep -q kind; then
+  kind create cluster
+fi
+
+# Load image into kind
+kind load docker-image "$IMAGE" --name kind
+
+# Install/upgrade helm chart
+helm upgrade --install "$RELEASE" "$CHART" --set image.repository=$(echo "$IMAGE" | sed 's/:.*$//') --set image.tag=$(echo "$IMAGE" | sed 's/^.*://')

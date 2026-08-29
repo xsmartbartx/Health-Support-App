@@ -1,0 +1,31 @@
+replicaCount: 1
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/<your-org>/service-a
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+database:
+  username: postgres
+  password: postgres
+
+postgres:
+  image: postgres:15-alpine
+  database: healthdb
+  storage: 1Gi
+  resources: {}
+
+flyway:
+  image: flyway/flyway:10.10.0
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

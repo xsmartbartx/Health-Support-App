@@ -1,0 +1,327 @@
+*** Begin Patch
+*** Add File: gradlew
++#!/usr/bin/env bash
++set -euo pipefail
++
++# Minimal gradle wrapper using docker to run Gradle inside a container
++# Usage: ./gradlew <gradle-args>
++DOCKER_IMAGE=gradle:8.4.1-jdk17
++docker run --rm -v "$(pwd)":/home/gradle/project -w /home/gradle/project $DOCKER_IMAGE gradle "$@"
++
+*** End Patch
+*** Begin Patch
+*** Add File: gradlew.bat
++@echo off
++REM Minimal gradle-wrapper for Windows using Docker
++docker run --rm -v "%cd%":/home/gradle/project -w /home/gradle/project gradle:8.4.1-jdk17 gradle %*
++
+*** End Patch
+*** Begin Patch
+*** Add File: services/service-a/build.gradle
++plugins {
++    id 'java'
++    id 'org.springframework.boot' version '3.1.3'
++    id 'io.spring.dependency-management' version '1.1.0'
++}
++
++group = 'com.example'
++version = '0.0.1-SNAPSHOT'
++sourceCompatibility = '17'
++
++repositories {
++    mavenCentral()
++}
++
++dependencies {
++    implementation 'org.springframework.boot:spring-boot-starter-web'
++    implementation 'org.springframework.boot:spring-boot-starter-actuator'
++    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
++    implementation 'org.flywaydb:flyway-core'
++    runtimeOnly 'org.postgresql:postgresql'
++
++    testImplementation 'org.springframework.boot:spring-boot-starter-test'
++}
++
++test {
++    useJUnitPlatform()
++}
++
+*** End Patch
+*** Begin Patch
+*** Add File: services/service-a/src/main/resources/application.yml
++spring:
++  datasource:
++    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/healthdb}
++    username: ${SPRING_DATASOURCE_USERNAME:postgres}
++    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
++  jpa:
++    hibernate:
++      ddl-auto: validate
++    properties:
++      hibernate:
++        format_sql: true
++  flyway:
++    enabled: true
++    locations: classpath:db/migration
++
++server:
++  port: ${SERVER_PORT:8080}
++
+*** End Patch
+*** Begin Patch
+*** Add File: services/service-a/src/main/java/com/example/servicea/model/AppUser.java
++package com.example.servicea.model;
++
++import jakarta.persistence.Entity;
++import jakarta.persistence.GeneratedValue;
++import jakarta.persistence.GenerationType;
++import jakarta.persistence.Id;
++
++@Entity
++public class AppUser {
++
++    @Id
++    @GeneratedValue(strategy = GenerationType.IDENTITY)
++    private Long id;
++    private String name;
++
++    public AppUser() {}
++
++    public AppUser(String name) {
++        this.name = name;
++    }
++
++    public Long getId() {
++        return id;
++    }
++
++    public String getName() {
++        return name;
++    }
++
++    public void setName(String name) {
++        this.name = name;
++    }
++}
++
+*** End Patch
+*** Begin Patch
+*** Add File: services/service-a/src/main/java/com/example/servicea/repository/AppUserRepository.java
++package com.example.servicea.repository;
++
++import com.example.servicea.model.AppUser;
++import org.springframework.data.jpa.repository.JpaRepository;
++
++public interface AppUserRepository extends JpaRepository<AppUser, Long> {
++}
++
+*** End Patch
+*** Begin Patch
+*** Add File: services/service-a/src/main/java/com/example/servicea/controller/UserController.java
++package com.example.servicea.controller;
++
++import com.example.servicea.model.AppUser;
++import com.example.servicea.repository.AppUserRepository;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RestController;
++
++import java.util.List;
++
++@RestController
++public class UserController {
++
++    private final AppUserRepository repo;
++
++    public UserController(AppUserRepository repo) {
++        this.repo = repo;
++    }
++
++    @GetMapping("/users")
++    public List<AppUser> list() {
++        return repo.findAll();
++    }
++
++    @PostMapping("/users")
++    public AppUser create(@RequestBody AppUser u) {
++        return repo.save(u);
++    }
++}
++
+*** End Patch
+*** Begin Patch
+*** Add File: services/service-a/src/main/resources/db/migration/V1__create_users.sql
++-- V1: create users table
++CREATE TABLE IF NOT EXISTS app_user (
++  id SERIAL PRIMARY KEY,
++  name VARCHAR(255) NOT NULL
++);
++
+*** End Patch
+*** Begin Patch
+*** Add File: services/service-a/src/main/java/com/example/servicea/DataInit.java
++package com.example.servicea;
++
++import com.example.servicea.model.AppUser;
++import com.example.servicea.repository.AppUserRepository;
++import org.springframework.boot.CommandLineRunner;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++
++@Configuration
++public class DataInit {
++
++    @Bean
++    CommandLineRunner init(AppUserRepository repo) {
++        return args -> {
++            if (repo.count() == 0) {
++                repo.save(new AppUser("Alice"));
++                repo.save(new AppUser("Bob"));
++            }
++        };
++    }
++}
++
+*** End Patch
+*** Begin Patch
+*** Add File: .github/workflows/ci.yml
++name: CI
++on:
++  push:
++    branches: [ 'scaffold/springboot-service' ]
++  pull_request:
++    branches: [ 'scaffold/springboot-service' ]
++
++jobs:
++  build:
++    runs-on: ubuntu-latest
++
++    steps:
++    - uses: actions/checkout@v4
++
++    - name: Set up JDK 17
++      uses: actions/setup-java@v4
++      with:
++        distribution: 'temurin'
++        java-version: '17'
++
++    - name: Build and test with Gradle (docker)
++      run: |
++        docker run --rm -v "${{ github.workspace }}":/home/gradle/project -w /home/gradle/project gradle:8.4.1-jdk17 gradle clean build --no-daemon
++
+*** End Patch
+*** Begin Patch
+*** Add File: charts/service-a/Chart.yaml
++apiVersion: v2
++name: service-a
++description: A minimal chart for service-a
++version: 0.1.0
++appVersion: "0.0.1"
++
+*** End Patch
+*** Begin Patch
+*** Add File: charts/service-a/values.yaml
++replicaCount: 1
++
++image:
++  repository: health-support-app/service-a
++  pullPolicy: IfNotPresent
++  tag: "local"
++
++service:
++  type: ClusterIP
++  port: 8080
++
++resources: {}
++
++nodeSelector: {}
++
++tolerations: []
++
+*** End Patch
+*** Begin Patch
+*** Add File: charts/service-a/templates/deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: {{ include "service-a.fullname" . }}
++  labels:
++    app: {{ include "service-a.name" . }}
++spec:
++  replicas: {{ .Values.replicaCount }}
++  selector:
++    matchLabels:
++      app: {{ include "service-a.name" . }}
++  template:
++    metadata:
++      labels:
++        app: {{ include "service-a.name" . }}
++    spec:
++      containers:
++        - name: service-a
++          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
++          ports:
++            - containerPort: 8080
++          env:
++            - name: SPRING_DATASOURCE_URL
++              value: "jdbc:postgresql://postgres:5432/healthdb"
++            - name: SPRING_DATASOURCE_USERNAME
++              value: "postgres"
++            - name: SPRING_DATASOURCE_PASSWORD
++              value: "postgres"
++
+*** End Patch
+*** Begin Patch
+*** Add File: charts/service-a/templates/service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: {{ include "service-a.fullname" . }}
++spec:
++  type: {{ .Values.service.type }}
++  ports:
++    - port: {{ .Values.service.port }}
++      targetPort: 8080
++  selector:
++    app: {{ include "service-a.name" . }}
++
+*** End Patch
+*** Begin Patch
+*** Add File: infra/terraform/main.tf
++# Terraform stub for infra
++
++# This is a placeholder Terraform module. Configure provider and resources as needed.
++terraform {
++  required_version = ">= 1.0"
++  required_providers {
++    aws = {
++      source  = "hashicorp/aws"
++      version = "~> 4.0"
++    }
++  }
++}
++
++# provider "aws" {
++#   region = var.region
++# }
++
++# Add real modules and resources here following docs/05-infrastruktura-terraform.md
++
+*** End Patch
+*** Begin Patch
+*** Add File: infra/terraform/variables.tf
++variable "region" {
++  description = "AWS region"
++  type        = string
++  default     = "us-east-1"
++}
++
+*** End Patch
+*** Begin Patch
+*** Add File: infra/terraform/outputs.tf
++output "note" {
++  value = "This is a stub terraform module. Please configure providers and resources before applying."
++}
++
+*** End Patch
