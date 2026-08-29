@@ -11,7 +11,7 @@ spring:
         format_sql: true
     defer-datasource-initialization: true
   flyway:
-    enabled: true
+    enabled: ${SPRING_FLYWAY_ENABLED:false}
     locations: classpath:db/migration
 
 management:

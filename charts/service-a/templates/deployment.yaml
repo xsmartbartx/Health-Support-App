@@ -38,6 +38,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "service-a.fullname" . }}-db
                   key: DB_PASSWORD
+            - name: SPRING_FLYWAY_ENABLED
+              value: "false"
             - name: SERVER_PORT
               value: "{{ .Values.service.port }}"
           ports:
