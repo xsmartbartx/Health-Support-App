@@ -17,6 +17,30 @@ spec:
         app.kubernetes.io/name: {{ include "service-a.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      initContainers:
+        - name: flyway-migrate
+          image: "{{ .Values.flyway.image }}"
+          imagePullPolicy: IfNotPresent
+          args:
+            - {{ printf "-url=jdbc:postgresql://%s-postgres:5432/%s" (include "service-a.fullname" .) .Values.postgres.database | quote }}
+            - "-user=$(DB_USERNAME)"
+            - "-password=$(DB_PASSWORD)"
+            - "-connectRetries=10"
+            - "migrate"
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "service-a.fullname" . }}-db
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "service-a.fullname" . }}-db
+                  key: DB_PASSWORD
+          volumeMounts:
+            - name: migrations
+              mountPath: /flyway/sql
       containers:
         - name: service-a
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -59,3 +83,7 @@ spec:
             periodSeconds: 20
             failureThreshold: 3
           resources: {{ toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: migrations
+          configMap:
+            name: {{ include "service-a.fullname" . }}-migrations
