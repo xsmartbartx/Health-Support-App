@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 public class AppUser {
@@ -13,7 +14,8 @@ public class AppUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Name cannot be blank")
+    @NotBlank(message = "Name cannot be blank or empty")
+    @NotNull(message = "Name is required")
     private String name;
 
     public AppUser() {}
