@@ -1,6 +1,8 @@
 package com.example.servicea;
 
 import com.example.servicea.model.AppUser;
+import com.example.servicea.repository.AppUserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +23,18 @@ public class IntegrationIT {
 
     @Autowired
     private TestRestTemplate restTemplate;
+
+    @Autowired
+    private AppUserRepository repository;
+
+    @BeforeEach
+    void resetDatabase() {
+        // All tests share one PostgreSQL container and Spring context, so reset the
+        // seeded rows before each test to keep them order-independent.
+        repository.deleteAll();
+        repository.save(new AppUser("Alice"));
+        repository.save(new AppUser("Bob"));
+    }
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
