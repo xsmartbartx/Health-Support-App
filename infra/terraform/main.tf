@@ -28,16 +28,16 @@ resource "aws_db_subnet_group" "default" {
 }
 
 resource "aws_db_instance" "healthdb" {
-  identifier          = "${var.environment}-healthdb"
-  engine              = "postgres"
-  engine_version      = var.rds_engine_version
-  instance_class      = var.rds_instance_class
-  allocated_storage   = var.rds_allocated_storage
-  name                = var.db_name
-  username            = var.db_username
-  password            = var.db_password
-  skip_final_snapshot = true
-  publicly_accessible = false
+  identifier           = "${var.environment}-healthdb"
+  engine               = "postgres"
+  engine_version       = var.rds_engine_version
+  instance_class       = var.rds_instance_class
+  allocated_storage    = var.rds_allocated_storage
+  db_name              = var.db_name
+  username             = var.db_username
+  password             = var.db_password
+  skip_final_snapshot  = true
+  publicly_accessible  = false
   db_subnet_group_name = length(var.db_subnet_ids) > 0 ? aws_db_subnet_group.default[0].name : null
 
   tags = {

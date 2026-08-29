@@ -14,9 +14,9 @@ variable "ecr_repo_name" {
 }
 
 variable "db_subnet_ids" {
-  type    = list(string)
+  type        = list(string)
   description = "List of subnet IDs for RDS subnet group"
-  default = []
+  default     = []
 }
 
 variable "db_name" {
@@ -30,21 +30,21 @@ variable "db_username" {
 }
 
 variable "db_password" {
-  type = string
+  type      = string
   sensitive = true
 }
 
 variable "rds_engine_version" {
-  type = string
+  type    = string
   default = "15.4"
 }
 
 variable "rds_instance_class" {
-  type = string
+  type    = string
   default = "db.t3.micro"
 }
 
 variable "rds_allocated_storage" {
-  type = number
+  type    = number
   default = 20
 }
