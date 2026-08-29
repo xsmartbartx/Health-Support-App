@@ -4,16 +4,42 @@
 
 ---
 
+## ✅ Wymagania wstępne (prerequisites)
+
+- **Java 17** — wymagany jest JDK 17 (np. [Eclipse Temurin](https://adoptium.net/)). Ustaw `JAVA_HOME` na JDK 17.
+- **Docker Desktop** — potrzebny do uruchomienia PostgreSQL oraz testów integracyjnych (Testcontainers).
+- **Gradle** — nie jest wymagany ręcznie: repo zawiera Gradle wrapper (`./gradlew`), który pobierze Gradle 8.4.
+
+> ℹ️ **Docker Desktop 29.x a Testcontainers**: Docker Desktop 29.7+ odrzuca starsze wersje Docker API,
+> przez co docker-java domyślnie dostaje HTTP 400 na `/info`. Repo już pina `api.version=1.55` w taskach
+> `test` i `integrationTest`, więc testy działają bez dodatkowej konfiguracji. Wystarczy uruchomiony Docker.
+
 ## 🚀 Quick Start (5 min)
 
 ```bash
 git clone https://github.com/xsmartbartx/Health-Support-App.git
 cd Health-Support-App
-docker-compose -f infra/dev-docker-compose.yml up -d
-./gradlew build && ./gradlew bootRun
+
+# Opcja A: aplikacja + baza przez Docker Compose
+docker-compose -f infra/dev-docker-compose.yml up --build -d
+
+# Opcja B: build i uruchomienie lokalnie (Gradle wrapper z repo root buduje services/service-a)
+./gradlew build
+./gradlew bootRun
 ```
 
-Aplikacja będzie dostępna na `http://localhost:8080`
+Aplikacja będzie dostępna na `http://localhost:8080`:
+
+- `GET /health` oraz `GET /actuator/health` — health check
+- `GET /users`, `POST /users` — użytkownicy
+- `GET /patients`, `POST /patients`, `PUT /patients/{id}`, `DELETE /patients/{id}` — pacjenci
+- `GET /appointments`, `POST /appointments`, `PUT /appointments/{id}`, `DELETE /appointments/{id}` — wizyty
+- `GET /medications`, `POST /medications`, `PUT /medications/{id}`, `DELETE /medications/{id}` — leki
+- `GET /swagger-ui.html` — dokumentacja OpenAPI (Swagger UI)
+- `GET /actuator/prometheus` — metryki Micrometer w formacie Prometheus
+
+> ℹ️ **Testy**: `./gradlew build` uruchamia testy jednostkowe **i** integracyjne (wymaga Dockera).
+> Aby uruchomić tylko testy jednostkowe: `./gradlew test`. Tylko integracyjne: `./gradlew integrationTest`.
 
 ---
 
@@ -49,14 +75,14 @@ Pełna dokumentacja znajduje się w folderze `docs/`. Aby zacząć:
 ### macOS / Linux
 
 ```bash
-# zainstaluj requirements
-brew install git docker docker-compose openjdk
+# zainstaluj requirements (JDK 17 + Docker)
+brew install git docker docker-compose temurin@17
 
 # clone, build, run
 git clone https://github.com/xsmartbartx/Health-Support-App.git
 cd Health-Support-App
 docker-compose -f infra/dev-docker-compose.yml up -d
-./gradlew clean build test
+./gradlew clean build
 ./gradlew bootRun
 ```
 
@@ -64,13 +90,13 @@ docker-compose -f infra/dev-docker-compose.yml up -d
 
 ```powershell
 # zainstaluj requirements (np. Chocolatey)
-choco install git docker-desktop openjdk
+choco install git docker-desktop temurin17
 
 # clone, build, run
 git clone https://github.com/xsmartbartx/Health-Support-App.git
 cd Health-Support-App
 docker-compose -f infra/dev-docker-compose.yml up -d
-.\gradlew clean build test
+.\gradlew clean build
 .\gradlew bootRun
 ```
 
