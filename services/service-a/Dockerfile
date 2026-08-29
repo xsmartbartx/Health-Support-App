@@ -6,7 +6,7 @@ RUN gradle bootJar --no-daemon --build-cache
 
 # RUNTIME stage
 # Using eclipse-temurin JRE for security updates and support
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:25-jre
 RUN apt-get update && apt-get install -y --no-install-recommends dumb-init netcat-openbsd && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
