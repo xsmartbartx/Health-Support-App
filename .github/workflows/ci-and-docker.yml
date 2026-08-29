@@ -115,4 +115,4 @@ jobs:
             org.opencontainers.image.created=${{ steps.build_meta.outputs.date }}
 
       - name: Output image info
-        run: echo "Image pushed: ${{ env.IMAGE_NAME }}:latest"
+        run: 'echo "Image pushed: ${{ env.IMAGE_NAME }}:latest"'
