@@ -15,7 +15,6 @@ permissions:
 env:
   SERVICE_PATH: services/service-a
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/service-a
-  POSTGRES_IMAGE: postgres:15
 
 jobs:
   test:
@@ -45,23 +44,9 @@ jobs:
         run: ./gradlew clean test --no-daemon --stacktrace
 
   integration:
-    name: Integration tests (uses Postgres service)
+    name: Integration tests (Testcontainers)
     needs: test
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: ${{ env.POSTGRES_IMAGE }}
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: healthdb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=10
     steps:
       - uses: actions/checkout@v4
 
@@ -81,32 +66,9 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-integration-
 
-      - name: Wait for Postgres to be ready
-        run: |
-          for i in $(seq 1 30); do
-            pg_isready -h 127.0.0.1 -p 5432 -U postgres && break
-            echo "Waiting for postgres... ($i/30)"; sleep 2
-          done
-
       - name: Run integration tests (service-a)
         working-directory: ${{ env.SERVICE_PATH }}
-        env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://127.0.0.1:5432/healthdb
-          SPRING_DATASOURCE_USERNAME: postgres
-          SPRING_DATASOURCE_PASSWORD: postgres
-        run: |
-          set -e
-          if ./gradlew -q integrationTest --no-daemon -PskipUnitTests=true; then
-            echo "integrationTest task ran"
-          else
-            echo "integrationTest task not found or failed; trying tests matching *IT"
-            if ./gradlew -q test --tests '*IT' --no-daemon; then
-              echo "Integration tests (*IT) ran"
-            else
-              echo "No integration tests found or they failed; exiting 0 to avoid blocking CI"
-              exit 0
-            fi
-          fi
+        run: ./gradlew integrationTest --no-daemon --stacktrace
 
   docker:
     name: Build & push Docker image (with cache)
