@@ -2,6 +2,8 @@ package com.example.servicea;
 
 import com.example.servicea.model.AppUser;
 import com.example.servicea.repository.AppUserRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collections;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -26,6 +31,8 @@ public class IntegrationIT {
 
     @Autowired
     private AppUserRepository repository;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void resetDatabase() {
@@ -55,49 +62,45 @@ public class IntegrationIT {
     }
 
     @Test
-    void listUsersReturnsInitialData() {
-        AppUser[] users = restTemplate.getForObject("/users", AppUser[].class);
-        assertThat(users).isNotNull().hasSize(2);
-        assertThat(users[0].getName()).isIn("Alice", "Bob");
-        assertThat(users[1].getName()).isIn("Alice", "Bob");
+    void listUsersReturnsInitialData() throws Exception {
+        ResponseEntity<String> response = restTemplate.getForEntity("/users", String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode content = objectMapper.readTree(response.getBody()).path("content");
+        assertThat(content.size()).isEqualTo(2);
+        assertThat(content.findValuesAsText("name")).containsExactlyInAnyOrder("Alice", "Bob");
     }
 
     @Test
-    void createUserSuccessfully() {
-        AppUser newUser = new AppUser("Charlie");
-        ResponseEntity<AppUser> response = restTemplate.postForEntity("/users", newUser, AppUser.class);
-        
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getName()).isEqualTo("Charlie");
-        assertThat(response.getBody().getId()).isNotNull();
+    void createUserSuccessfully() throws Exception {
+        ResponseEntity<String> response = restTemplate.postForEntity("/users", Map.of("name", "Charlie"), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.path("name").asText()).isEqualTo("Charlie");
+        assertThat(body.path("id").isNumber()).isTrue();
     }
 
     @Test
     void createUserWithBlankNameReturnsValidationError() {
-        AppUser invalidUser = new AppUser();
-        invalidUser.setName("");  // blank name
-        
-        ResponseEntity<String> response = restTemplate.postForEntity("/users", invalidUser, String.class);
-        
+        ResponseEntity<String> response = restTemplate.postForEntity("/users", Map.of("name", ""), String.class);
+
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).contains("Validation Failed").contains("fields");
     }
 
     @Test
     void createUserWithNullNameReturnsValidationError() {
-        AppUser invalidUser = new AppUser();
-        invalidUser.setName(null);  // null name
-        
-        ResponseEntity<String> response = restTemplate.postForEntity("/users", invalidUser, String.class);
-        
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/users", Collections.singletonMap("name", null), String.class);
+
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test
     void actuatorHealthEndpointIsAvailable() {
         ResponseEntity<String> response = restTemplate.getForEntity("/actuator/health", String.class);
-        
+
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).contains("UP");
     }
