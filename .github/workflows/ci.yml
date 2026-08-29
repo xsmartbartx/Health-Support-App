@@ -39,6 +39,6 @@ jobs:
           exit 1
         fi
 
-    - name: Build and test with Gradle (docker)
-      run: |
-        docker run --rm -v "${{ github.workspace }}":/home/gradle/project -w /home/gradle/project gradle:8-jdk17 gradle clean build --no-daemon
+    - name: Build and test with Gradle
+      working-directory: services/service-a
+      run: ./gradlew clean test --no-daemon --stacktrace
