@@ -12,7 +12,8 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app: {{ include "service-a.name" . }}
+              app.kubernetes.io/name: {{ include "service-a.name" . }}
+              app.kubernetes.io/instance: {{ .Release.Name }}
       ports:
         - protocol: TCP
           port: 5432
