@@ -1,5 +1,5 @@
 # BUILD stage
-FROM gradle:8-jdk17 AS builder
+FROM gradle:9-jdk17 AS builder
 WORKDIR /home/gradle/project
 COPY --chown=gradle:gradle . .
 RUN gradle bootJar --no-daemon --build-cache
