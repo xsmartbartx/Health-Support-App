@@ -22,6 +22,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: DB_HOST
+              value: "{{ include "service-a.fullname" . }}-postgres"
+            - name: DB_PORT
+              value: "5432"
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:postgresql://{{ include "service-a.fullname" . }}-postgres:5432/{{ .Values.postgres.database }}"
             - name: SPRING_DATASOURCE_USERNAME

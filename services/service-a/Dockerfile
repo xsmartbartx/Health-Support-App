@@ -24,4 +24,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD wget --quiet --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/wait-for-it.sh", "postgres:5432", "--timeout=60", "--strict", "--", "java", "-jar", "/app/app.jar"]
+CMD ["/bin/sh", "-c", "/wait-for-it.sh ${DB_HOST:-postgres}:${DB_PORT:-5432} --timeout=60 --strict -- java -jar /app/app.jar"]
