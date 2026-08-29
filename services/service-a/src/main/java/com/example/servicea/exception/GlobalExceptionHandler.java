@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,27 @@ public class GlobalExceptionHandler {
         errorResponse.put("fields", fieldErrors);
 
         logger.warn("Validation error: {}", fieldErrors);
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
+        errorResponse.put("error", "Data Integrity Violation");
+        
+        String message = e.getMessage();
+        if (message != null && message.contains("not-null constraint")) {
+            errorResponse.put("message", "Required field is missing or null");
+        } else if (message != null && message.contains("unique constraint")) {
+            errorResponse.put("message", "Duplicate entry: this value already exists");
+        } else {
+            errorResponse.put("message", "Invalid data provided");
+        }
+
+        logger.warn("Data integrity violation: {}", message);
         return ResponseEntity.badRequest().body(errorResponse);
     }
 

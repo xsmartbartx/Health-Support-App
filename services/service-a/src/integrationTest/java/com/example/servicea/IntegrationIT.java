@@ -43,7 +43,7 @@ public class IntegrationIT {
     @Test
     void listUsersReturnsInitialData() {
         AppUser[] users = restTemplate.getForObject("/users", AppUser[].class);
-        assertThat(users).isNotNull().hasLength(2);
+        assertThat(users).isNotNull().hasSize(2);
         assertThat(users[0].getName()).isIn("Alice", "Bob");
         assertThat(users[1].getName()).isIn("Alice", "Bob");
     }
