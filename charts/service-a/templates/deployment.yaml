@@ -21,6 +21,21 @@ spec:
         - name: service-a
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ include "service-a.fullname" . }}-postgres:5432/{{ .Values.postgres.database }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "service-a.fullname" . }}-db
+                  key: DB_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "service-a.fullname" . }}-db
+                  key: DB_PASSWORD
+            - name: SERVER_PORT
+              value: "{{ .Values.service.port }}"
           ports:
             - containerPort: {{ .Values.service.port }}
           readinessProbe:
