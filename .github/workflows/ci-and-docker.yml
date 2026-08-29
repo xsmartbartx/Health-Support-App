@@ -116,3 +116,32 @@ jobs:
 
       - name: Output image info
         run: 'echo "Image pushed: ${{ env.IMAGE_NAME }}:latest"'
+
+  trivy:
+    name: Container image scan (Trivy)
+    needs: [test, integration]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image for scanning
+        run: docker build -t service-a:scan "${{ env.SERVICE_PATH }}"
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: service-a:scan
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
