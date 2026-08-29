@@ -40,6 +40,10 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    // Docker Desktop 29.x dropped support for Docker API < 1.45, while docker-java
+    // defaults to an older API version and would get HTTP 400 on /info. Pin a recent
+    // API version (docker-java negotiates down against older daemons, e.g. CI).
+    systemProperty 'api.version', '1.55'
 }
 
 // Integration test source set & task
