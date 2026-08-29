@@ -1,0 +1,6 @@
+rootProject.name = 'health-support-app'
+
+// Monorepo layout: the only service today lives under services/service-a.
+// Exposed as project ':service-a' so that `./gradlew build` from the repo root works.
+include 'service-a'
+project(':service-a').projectDir = file('services/service-a')

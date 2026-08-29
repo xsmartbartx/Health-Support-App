@@ -1,0 +1,12 @@
+// Root build file for the Health Support App monorepo.
+//
+// The Gradle wrapper (./gradlew) at the repository root uses settings.gradle
+// to include services/service-a as the ':service-a' subproject.
+//
+// Common commands (run from the repository root):
+//   ./gradlew build             # assemble + unit tests + integration tests (needs Docker)
+//   ./gradlew test              # unit tests only
+//   ./gradlew integrationTest   # Testcontainers integration tests (needs Docker)
+//   ./gradlew bootRun           # run service-a locally (expects PostgreSQL on localhost:5432)
+//
+// Subproject-specific configuration lives in services/service-a/build.gradle.
