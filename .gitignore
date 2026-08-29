@@ -62,3 +62,11 @@ Thumbs.db
 # Test results
 TestResults.xml
 infra/terraform/terraform.tfvars
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
