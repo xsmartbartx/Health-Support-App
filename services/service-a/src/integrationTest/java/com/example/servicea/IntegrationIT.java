@@ -116,6 +116,81 @@ public class IntegrationIT {
     }
 
     @Test
+    void createPatientSuccessfully() throws Exception {
+        ResponseEntity<String> response = restTemplate.postForEntity("/patients", patientBody("John", "Doe"), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.path("id").isNumber()).isTrue();
+        assertThat(body.path("firstName").asText()).isEqualTo("John");
+        assertThat(body.path("lastName").asText()).isEqualTo("Doe");
+        assertThat(body.path("email").asText()).isEqualTo("john.doe@example.com");
+        assertThat(body.path("dateOfBirth").asText()).isEqualTo("1990-05-20");
+    }
+
+    @Test
+    void listPatientsReturnsCreatedPatient() throws Exception {
+        createPatient("Jane", "Roe");
+
+        ResponseEntity<String> response = restTemplate.getForEntity("/patients", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode content = objectMapper.readTree(response.getBody()).path("content");
+        assertThat(content.size()).isEqualTo(1);
+        assertThat(content.get(0).path("email").asText()).isEqualTo("jane.roe@example.com");
+    }
+
+    @Test
+    void getPatientById() throws Exception {
+        long id = createPatient("John", "Doe");
+
+        ResponseEntity<String> response = restTemplate.getForEntity("/patients/" + id, String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.path("id").asLong()).isEqualTo(id);
+        assertThat(body.path("firstName").asText()).isEqualTo("John");
+    }
+
+    @Test
+    void updatePatient() throws Exception {
+        long id = createPatient("John", "Doe");
+
+        Map<String, Object> update = patientBody("Jonathan", "Doe");
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/patients/" + id, HttpMethod.PUT, jsonEntity(update), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.path("firstName").asText()).isEqualTo("Jonathan");
+    }
+
+    @Test
+    void deletePatient() throws Exception {
+        long id = createPatient("John", "Doe");
+
+        ResponseEntity<Void> delete = restTemplate.exchange(
+                "/patients/" + id, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+        assertThat(delete.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        ResponseEntity<String> get = restTemplate.getForEntity("/patients/" + id, String.class);
+        assertThat(get.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void getMissingPatientReturns404() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/patients/999999", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void createPatientWithBlankFirstNameReturnsValidationError() {
+        Map<String, Object> body = patientBody("", "Doe");
+        ResponseEntity<String> response = restTemplate.postForEntity("/patients", body, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("Validation Failed").contains("fields");
+    }
+
+    @Test
     void actuatorHealthEndpointIsAvailable() {
         ResponseEntity<String> response = restTemplate.getForEntity("/actuator/health", String.class);
 
