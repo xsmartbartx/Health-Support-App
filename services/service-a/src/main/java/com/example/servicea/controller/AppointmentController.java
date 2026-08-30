@@ -2,6 +2,7 @@ package com.example.servicea.controller;
 
 import com.example.servicea.dto.AppointmentRequest;
 import com.example.servicea.dto.AppointmentResponse;
+import com.example.servicea.dto.AppointmentStatusRequest;
 import com.example.servicea.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,6 +14,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -56,6 +58,13 @@ public class AppointmentController {
     @Operation(summary = "Update an existing appointment")
     public AppointmentResponse update(@PathVariable Long id, @Valid @RequestBody AppointmentRequest request) {
         return appointmentService.update(id, request);
+    }
+
+    @PatchMapping("/{id}/status")
+    @Operation(summary = "Update an appointment's status")
+    public AppointmentResponse updateStatus(@PathVariable Long id,
+            @Valid @RequestBody AppointmentStatusRequest request) {
+        return appointmentService.updateStatus(id, request.status());
     }
 
     @DeleteMapping("/{id}")
