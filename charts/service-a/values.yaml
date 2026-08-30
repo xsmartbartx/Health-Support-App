@@ -4,7 +4,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 image:
-  repository: ghcr.io/<your-org>/service-a
+  repository: ghcr.io/<your-org>/<your-repo>/service-a
   tag: latest
   pullPolicy: IfNotPresent
 
