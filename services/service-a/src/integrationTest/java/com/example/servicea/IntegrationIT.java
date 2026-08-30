@@ -191,6 +191,37 @@ public class IntegrationIT {
     }
 
     @Test
+    void searchPatientsByPartialNameOrEmail() throws Exception {
+        createPatient("John", "Doe");
+        createPatient("Jane", "Roe");
+
+        ResponseEntity<String> byName = restTemplate.getForEntity("/patients/search?q=john", String.class);
+        assertThat(byName.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode nameResults = objectMapper.readTree(byName.getBody());
+        assertThat(nameResults.size()).isEqualTo(1);
+        assertThat(nameResults.get(0).path("firstName").asText()).isEqualTo("John");
+
+        ResponseEntity<String> byEmail = restTemplate.getForEntity(
+                "/patients/search?q=jane.roe@example.com", String.class);
+        assertThat(objectMapper.readTree(byEmail.getBody()).size()).isEqualTo(1);
+    }
+
+    @Test
+    void getPatientWithNonNumericIdReturns400() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/patients/not-a-number", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void createPatientWithDuplicateEmailReturns409() throws Exception {
+        createPatient("John", "Doe");
+
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/patients", patientBody("John", "Doe"), String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
     void appointmentLifecycle() throws Exception {
         long patientId = createPatient("John", "Doe");
 
@@ -244,6 +275,48 @@ public class IntegrationIT {
     }
 
     @Test
+    void updateAppointmentStatus() throws Exception {
+        long patientId = createPatient("John", "Doe");
+        long id = createAppointment(patientId, "2030-01-01T10:00:00Z");
+
+        ResponseEntity<String> patch = restTemplate.exchange(
+                "/appointments/" + id + "/status", HttpMethod.PATCH,
+                jsonEntity(statusBody("COMPLETED")), String.class);
+        assertThat(patch.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(objectMapper.readTree(patch.getBody()).path("status").asText()).isEqualTo("COMPLETED");
+
+        ResponseEntity<String> get = restTemplate.getForEntity("/appointments/" + id, String.class);
+        assertThat(objectMapper.readTree(get.getBody()).path("status").asText()).isEqualTo("COMPLETED");
+    }
+
+    @Test
+    void updateAppointmentStatusWithNullReturns400() throws Exception {
+        long patientId = createPatient("John", "Doe");
+        long id = createAppointment(patientId, "2030-01-01T10:00:00Z");
+
+        ResponseEntity<String> patch = restTemplate.exchange(
+                "/appointments/" + id + "/status", HttpMethod.PATCH,
+                jsonEntity(statusBody(null)), String.class);
+        assertThat(patch.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void createAppointmentWithInvalidStatusReturns400() throws Exception {
+        long patientId = createPatient("John", "Doe");
+        Map<String, Object> body = appointmentBody(patientId, "2030-01-01T10:00:00Z", "Checkup");
+        body.put("status", "NOT_A_REAL_STATUS");
+
+        ResponseEntity<String> response = restTemplate.postForEntity("/appointments", body, String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void listAppointmentsForMissingPatientReturns404() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/patients/999999/appointments", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     void medicationLifecycle() throws Exception {
         long patientId = createPatient("John", "Doe");
 
@@ -282,6 +355,16 @@ public class IntegrationIT {
     }
 
     @Test
+    void createMedicationWithEndDateBeforeStartDateReturns400() throws Exception {
+        long patientId = createPatient("John", "Doe");
+        Map<String, Object> body = medicationBody(patientId, "Aspirin");
+        body.put("endDate", "2023-12-31");
+
+        ResponseEntity<String> response = restTemplate.postForEntity("/medications", body, String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void listPatientMedications() throws Exception {
         long patientId = createPatient("John", "Doe");
         createMedication(patientId, "Aspirin");
@@ -292,6 +375,12 @@ public class IntegrationIT {
         JsonNode medications = objectMapper.readTree(response.getBody());
         assertThat(medications.size()).isEqualTo(2);
         assertThat(medications.findValuesAsText("name")).containsExactlyInAnyOrder("Aspirin", "Ibuprofen");
+    }
+
+    @Test
+    void listMedicationsForMissingPatientReturns404() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/patients/999999/medications", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -366,6 +455,12 @@ public class IntegrationIT {
         body.put("dosage", "500mg");
         body.put("frequency", "Twice daily");
         body.put("startDate", "2024-01-01");
+        return body;
+    }
+
+    private Map<String, Object> statusBody(String status) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", status);
         return body;
     }
 
