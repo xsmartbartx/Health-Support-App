@@ -1,7 +1,10 @@
 package com.example.servicea;
 
 import com.example.servicea.model.AppUser;
+import com.example.servicea.repository.AppointmentRepository;
 import com.example.servicea.repository.AppUserRepository;
+import com.example.servicea.repository.MedicationRepository;
+import com.example.servicea.repository.PatientRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,7 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -18,6 +25,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,13 +39,23 @@ public class IntegrationIT {
 
     @Autowired
     private AppUserRepository repository;
+    @Autowired
+    private PatientRepository patientRepository;
+    @Autowired
+    private AppointmentRepository appointmentRepository;
+    @Autowired
+    private MedicationRepository medicationRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void resetDatabase() {
         // All tests share one PostgreSQL container and Spring context, so reset the
-        // seeded rows before each test to keep them order-independent.
+        // seeded rows before each test to keep them order-independent. Children first
+        // to respect foreign keys.
+        appointmentRepository.deleteAll();
+        medicationRepository.deleteAll();
+        patientRepository.deleteAll();
         repository.deleteAll();
         repository.save(new AppUser("Alice"));
         repository.save(new AppUser("Bob"));
