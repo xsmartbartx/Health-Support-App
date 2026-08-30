@@ -191,6 +191,59 @@ public class IntegrationIT {
     }
 
     @Test
+    void appointmentLifecycle() throws Exception {
+        long patientId = createPatient("John", "Doe");
+
+        ResponseEntity<String> create = restTemplate.postForEntity(
+                "/appointments", appointmentBody(patientId, "2030-01-01T10:00:00Z", "Annual checkup"), String.class);
+        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        JsonNode created = objectMapper.readTree(create.getBody());
+        long id = created.path("id").asLong();
+        assertThat(created.path("patientName").asText()).isEqualTo("John Doe");
+        assertThat(created.path("reason").asText()).isEqualTo("Annual checkup");
+        assertThat(created.path("status").asText()).isEqualTo("SCHEDULED");
+
+        ResponseEntity<String> list = restTemplate.getForEntity("/appointments", String.class);
+        assertThat(objectMapper.readTree(list.getBody()).path("content").size()).isEqualTo(1);
+
+        ResponseEntity<String> get = restTemplate.getForEntity("/appointments/" + id, String.class);
+        assertThat(objectMapper.readTree(get.getBody()).path("id").asLong()).isEqualTo(id);
+
+        Map<String, Object> update = appointmentBody(patientId, "2030-01-01T10:00:00Z", "Follow-up");
+        update.put("status", "COMPLETED");
+        ResponseEntity<String> put = restTemplate.exchange(
+                "/appointments/" + id, HttpMethod.PUT, jsonEntity(update), String.class);
+        JsonNode updated = objectMapper.readTree(put.getBody());
+        assertThat(updated.path("reason").asText()).isEqualTo("Follow-up");
+        assertThat(updated.path("status").asText()).isEqualTo("COMPLETED");
+
+        ResponseEntity<Void> delete = restTemplate.exchange(
+                "/appointments/" + id, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+        assertThat(delete.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    void createAppointmentForMissingPatientReturns404() {
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/appointments", appointmentBody(999999L, "2030-01-01T10:00:00Z", "Checkup"), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void listPatientAppointments() throws Exception {
+        long patientId = createPatient("John", "Doe");
+        createAppointment(patientId, "2030-02-01T09:00:00Z");
+        createAppointment(patientId, "2030-01-15T09:00:00Z");
+
+        ResponseEntity<String> response = restTemplate.getForEntity("/patients/" + patientId + "/appointments", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode appointments = objectMapper.readTree(response.getBody());
+        assertThat(appointments.size()).isEqualTo(2);
+        assertThat(appointments.findValuesAsText("reason")).containsExactly("Annual checkup", "Annual checkup");
+    }
+
+    @Test
     void actuatorHealthEndpointIsAvailable() {
         ResponseEntity<String> response = restTemplate.getForEntity("/actuator/health", String.class);
 
