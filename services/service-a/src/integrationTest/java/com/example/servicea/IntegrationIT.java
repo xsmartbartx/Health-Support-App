@@ -244,10 +244,134 @@ public class IntegrationIT {
     }
 
     @Test
+    void medicationLifecycle() throws Exception {
+        long patientId = createPatient("John", "Doe");
+
+        ResponseEntity<String> create = restTemplate.postForEntity(
+                "/medications", medicationBody(patientId, "Aspirin"), String.class);
+        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        JsonNode created = objectMapper.readTree(create.getBody());
+        long id = created.path("id").asLong();
+        assertThat(created.path("patientName").asText()).isEqualTo("John Doe");
+        assertThat(created.path("name").asText()).isEqualTo("Aspirin");
+        assertThat(created.path("active").asBoolean()).isTrue();
+
+        ResponseEntity<String> list = restTemplate.getForEntity("/medications", String.class);
+        assertThat(objectMapper.readTree(list.getBody()).path("content").size()).isEqualTo(1);
+
+        ResponseEntity<String> get = restTemplate.getForEntity("/medications/" + id, String.class);
+        assertThat(objectMapper.readTree(get.getBody()).path("id").asLong()).isEqualTo(id);
+
+        Map<String, Object> update = medicationBody(patientId, "Aspirin");
+        update.put("dosage", "100mg");
+        ResponseEntity<String> put = restTemplate.exchange(
+                "/medications/" + id, HttpMethod.PUT, jsonEntity(update), String.class);
+        assertThat(objectMapper.readTree(put.getBody()).path("dosage").asText()).isEqualTo("100mg");
+
+        ResponseEntity<Void> delete = restTemplate.exchange(
+                "/medications/" + id, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+        assertThat(delete.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    void createMedicationForMissingPatientReturns404() {
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/medications", medicationBody(999999L, "Aspirin"), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void listPatientMedications() throws Exception {
+        long patientId = createPatient("John", "Doe");
+        createMedication(patientId, "Aspirin");
+        createMedication(patientId, "Ibuprofen");
+
+        ResponseEntity<String> response = restTemplate.getForEntity("/patients/" + patientId + "/medications", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode medications = objectMapper.readTree(response.getBody());
+        assertThat(medications.size()).isEqualTo(2);
+        assertThat(medications.findValuesAsText("name")).containsExactlyInAnyOrder("Aspirin", "Ibuprofen");
+    }
+
+    @Test
+    void prometheusMetricsExposeBusinessCounters() throws Exception {
+        createPatient("John", "Doe");
+
+        // The Prometheus scrape endpoint only produces text/plain (Prometheus format);
+        // without a matching Accept header actuator returns 404 rather than a payload.
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.TEXT_PLAIN));
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/actuator/prometheus", HttpMethod.GET, new HttpEntity<>(headers), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("patients_created_total");
+    }
+
+    @Test
     void actuatorHealthEndpointIsAvailable() {
         ResponseEntity<String> response = restTemplate.getForEntity("/actuator/health", String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).contains("UP");
+    }
+
+    // ------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------
+
+    private long createPatient(String firstName, String lastName) throws Exception {
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/patients", patientBody(firstName, lastName), String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        return objectMapper.readTree(response.getBody()).path("id").asLong();
+    }
+
+    private long createAppointment(long patientId, String scheduledAt) throws Exception {
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/appointments", appointmentBody(patientId, scheduledAt, "Annual checkup"), String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        return objectMapper.readTree(response.getBody()).path("id").asLong();
+    }
+
+    private long createMedication(long patientId, String name) throws Exception {
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/medications", medicationBody(patientId, name), String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        return objectMapper.readTree(response.getBody()).path("id").asLong();
+    }
+
+    private Map<String, Object> patientBody(String firstName, String lastName) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("firstName", firstName);
+        body.put("lastName", lastName);
+        body.put("email", (firstName + "." + lastName + "@example.com").toLowerCase());
+        body.put("dateOfBirth", "1990-05-20");
+        return body;
+    }
+
+    private Map<String, Object> appointmentBody(long patientId, String scheduledAt, String reason) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("patientId", patientId);
+        body.put("scheduledAt", scheduledAt);
+        body.put("reason", reason);
+        return body;
+    }
+
+    private Map<String, Object> medicationBody(long patientId, String name) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("patientId", patientId);
+        body.put("name", name);
+        body.put("dosage", "500mg");
+        body.put("frequency", "Twice daily");
+        body.put("startDate", "2024-01-01");
+        return body;
+    }
+
+    private HttpEntity<Map<String, Object>> jsonEntity(Map<String, Object> body) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return new HttpEntity<>(body, headers);
     }
 }
