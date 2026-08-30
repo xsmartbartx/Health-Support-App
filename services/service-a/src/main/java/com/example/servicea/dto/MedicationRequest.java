@@ -1,5 +1,6 @@
 package com.example.servicea.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -83,5 +84,10 @@ public class MedicationRequest {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    @AssertTrue(message = "End date must be on or after start date")
+    public boolean isEndDateValid() {
+        return endDate == null || startDate == null || !endDate.isBefore(startDate);
     }
 }
