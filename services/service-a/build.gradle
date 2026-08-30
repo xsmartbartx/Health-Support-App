@@ -75,10 +75,6 @@ task integrationTest(type: Test) {
     shouldRunAfter test
     // Same Docker Desktop 29.x / docker-java API version workaround as the unit tests.
     systemProperty 'api.version', '1.55'
-    systemProperty 'debug', 'true'
-    testLogging {
-        showStandardStreams = true
-    }
 }
 
 check.dependsOn integrationTest

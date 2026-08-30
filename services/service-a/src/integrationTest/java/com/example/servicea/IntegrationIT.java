@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -49,9 +48,6 @@ public class IntegrationIT {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Autowired
-    private ApplicationContext applicationContext;
-
     @BeforeEach
     void resetDatabase() {
         // All tests share one PostgreSQL container and Spring context, so reset the
@@ -81,14 +77,6 @@ public class IntegrationIT {
     @Test
     void contextLoads() {
         // Smoke test — if Spring context starts successfully the test passes.
-    }
-
-    @Test
-    void debugPrometheusBeans() {
-        System.out.println("DEBUG PrometheusMeterRegistry beans="
-                + java.util.Arrays.toString(applicationContext.getBeanNamesForType(io.micrometer.prometheus.PrometheusMeterRegistry.class)));
-        System.out.println("DEBUG PrometheusScrapeEndpoint beans="
-                + java.util.Arrays.toString(applicationContext.getBeanNamesForType(org.springframework.boot.actuate.metrics.export.prometheus.PrometheusScrapeEndpoint.class)));
     }
 
     @Test
@@ -310,8 +298,8 @@ public class IntegrationIT {
     void prometheusMetricsExposeBusinessCounters() throws Exception {
         createPatient("John", "Doe");
 
-        // The Prometheus scrape endpoint only produces text/plain (Prometheus format);
-        // without a matching Accept header actuator returns 404 rather than a payload.
+        // The Prometheus scrape endpoint produces text/plain (Prometheus format),
+        // so send an explicit Accept header to avoid content-negotiation issues.
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.TEXT_PLAIN));
         ResponseEntity<String> response = restTemplate.exchange(
