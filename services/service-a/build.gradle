@@ -39,6 +39,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
+    // Enables PATCH via TestRestTemplate: the default HttpURLConnection client does not
+    // support the PATCH method; Spring Boot 3.x's TestRestTemplate uses Apache HttpClient 5.
+    testImplementation 'org.apache.httpcomponents.client5:httpclient5'
 }
 
 test {
