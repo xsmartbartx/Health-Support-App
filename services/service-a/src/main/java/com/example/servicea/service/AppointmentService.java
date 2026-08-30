@@ -4,6 +4,7 @@ import com.example.servicea.dto.AppointmentRequest;
 import com.example.servicea.dto.AppointmentResponse;
 import com.example.servicea.exception.ResourceNotFoundException;
 import com.example.servicea.model.Appointment;
+import com.example.servicea.model.AppointmentStatus;
 import com.example.servicea.model.Patient;
 import com.example.servicea.repository.AppointmentRepository;
 import com.example.servicea.repository.PatientRepository;
@@ -40,6 +41,8 @@ public class AppointmentService {
     }
 
     public List<AppointmentResponse> listByPatient(Long patientId) {
+        patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + patientId));
         return repository.findByPatientIdOrderByScheduledAtAsc(patientId).stream()
                 .map(AppointmentResponse::from)
                 .toList();
@@ -84,6 +87,13 @@ public class AppointmentService {
     public void delete(Long id) {
         repository.delete(findById(id));
         meterRegistry.counter("appointments.deleted").increment();
+    }
+
+    @Transactional
+    public AppointmentResponse updateStatus(Long id, AppointmentStatus status) {
+        Appointment appointment = findById(id);
+        appointment.setStatus(status);
+        return AppointmentResponse.from(repository.save(appointment));
     }
 
     private Appointment findById(Long id) {

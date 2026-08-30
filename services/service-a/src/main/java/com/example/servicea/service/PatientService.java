@@ -11,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @Transactional(readOnly = true)
 public class PatientService {
@@ -29,6 +31,15 @@ public class PatientService {
 
     public PatientResponse get(Long id) {
         return PatientResponse.from(findById(id));
+    }
+
+    public List<PatientResponse> search(String query) {
+        return repository
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                        query, query, query)
+                .stream()
+                .map(PatientResponse::from)
+                .toList();
     }
 
     @Transactional

@@ -40,6 +40,8 @@ public class MedicationService {
     }
 
     public List<MedicationResponse> listByPatient(Long patientId) {
+        patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + patientId));
         return repository.findByPatientIdOrderByStartDateDesc(patientId).stream()
                 .map(MedicationResponse::from)
                 .toList();
