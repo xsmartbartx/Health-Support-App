@@ -13,27 +13,32 @@ import java.util.UUID;
 @Component
 public class RequestLoggingInterceptor implements HandlerInterceptor {
 
+    public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
+    private static final String MDC_KEY = "correlationId";
     private static final Logger logger = LoggerFactory.getLogger(RequestLoggingInterceptor.class);
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-            throws Exception {
-        String correlationId = UUID.randomUUID().toString();
-        MDC.put("correlationId", correlationId);
-        request.setAttribute("correlationId", correlationId);
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        // Reuse an incoming correlation id (distributed tracing) or generate one.
+        String correlationId = request.getHeader(CORRELATION_ID_HEADER);
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = UUID.randomUUID().toString();
+        }
+        MDC.put(MDC_KEY, correlationId);
+        response.setHeader(CORRELATION_ID_HEADER, correlationId);
 
-        logger.info("Incoming {} request: {} from {}", 
-            request.getMethod(), 
-            request.getRequestURI(), 
+        logger.info("Incoming {} request: {} from {}",
+            request.getMethod(),
+            request.getRequestURI(),
             request.getRemoteAddr());
 
         return true;
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, 
-            Object handler, Exception ex) throws Exception {
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
+            Object handler, Exception ex) {
         logger.info("Request completed with status: {}", response.getStatus());
-        MDC.remove("correlationId");
+        MDC.remove(MDC_KEY);
     }
 }
