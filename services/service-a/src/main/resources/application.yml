@@ -53,9 +53,8 @@ logging:
     org.springframework.web: INFO
     org.hibernate: WARN
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-    correlation: "%X{correlationId}"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%X{correlationId:-}] - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId:-}] %-5level %logger{36} - %msg%n"
   file:
     name: logs/application.log
     max-size: 10MB
