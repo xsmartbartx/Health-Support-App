@@ -23,7 +23,7 @@ jobs:
         echo "Expected JDK version: $JAVA_VERSION (major: $JAVA_MAJOR)"
 
     - name: Set up JDK ${{ steps.jdk-version.outputs.major }}
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v6
       with:
         distribution: 'temurin'
         java-version: '${{ steps.jdk-version.outputs.major }}'
