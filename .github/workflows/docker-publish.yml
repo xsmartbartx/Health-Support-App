@@ -21,7 +21,7 @@ jobs:
 
       - name: Build image (PR validation, no push)
         if: github.event_name == 'pull_request'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./services/service-a
           push: false
@@ -37,7 +37,7 @@ jobs:
 
       - name: Build and push image
         if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./services/service-a
           push: true
