@@ -125,7 +125,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build image for scanning
         run: docker build -t service-a:scan "${{ env.SERVICE_PATH }}"
